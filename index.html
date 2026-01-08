@@ -533,20 +533,35 @@
         txt.textContent = l.label;
         txt.dataset.linkid = l.id;
 
+        
         // click sull'etichetta per modificarla
         txt.addEventListener("mousedown", function (e) {
-          e.stopPropagation();
-          var id = this.dataset.linkid;
+         e.stopPropagation();
+         var id = this.dataset.linkid;
 
-          for (var k = 0; k < links.length; k++) {
-            if (links[k].id === id) {
-              var nuovo = prompt("Etichetta del collegamento:", links[k].label || "");
-              if (nuovo !== null) links[k].label = nuovo;
-              break;
-            }
-          }
-          renderLinks();
-        });
+        // esci comunque dalla modalità collega, se attiva
+         setLinkMode(false);
+
+       // seleziona il link (solo feedback visivo)
+         selectLink(id);
+
+      // modifica l'etichetta
+         for (var k = 0; k < links.length; k++) {
+          if (links[k].id === id) {
+           var nuovo = prompt("Etichetta del collegamento:", links[k].label || "");
+           if (nuovo !== null) links[k].label = nuovo;
+           break;
+         }
+      }
+
+     // ridisegna le linee
+      renderLinks();
+
+      // torna subito in stato neutro: niente freccia "agganciata"
+       clearSelections();
+       setStatus("Pronto");
+   });
+
 
         // --- SFONDO dietro il testo (copre la linea sotto) ---
         // 1) aggiungo temporaneamente il testo per misurarlo
