@@ -1,0 +1,938 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>mappificio</title>
+  <style>
+    :root { --bg:#f6f7fb; --grid:rgba(0,0,0,.06); --ink:#1a1a1a; }
+
+    html, body { height:100%; margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; color:var(--ink); }
+    #app { height:100%; display:grid; grid-template-rows:auto 1fr; }
+
+    header{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center; padding:10px 12px;
+      background:#fff; border-bottom:1px solid rgba(0,0,0,.08);
+      position:sticky; top:0; z-index:10;
+    }
+    .btn{
+      border:1px solid rgba(0,0,0,.18);
+      background:#fff;
+      border-radius:10px;
+      padding:7px 10px;
+      cursor:pointer;
+      font-size:13px;
+      user-select:none;
+      white-space:nowrap;
+    }
+    .btn:hover{ background:#f7f7f7; }
+    .btn.active{
+      border-color: rgba(0,120,255,.55);
+      box-shadow: 0 0 0 3px rgba(0,120,255,.18);
+    }
+    .btn.danger{ border-color: rgba(200,0,0,.28); }
+    .btn.danger:hover{ background: rgba(200,0,0,.06); }
+
+    .hint{ font-size:13px; opacity:.75; flex: 1 1 520px; }
+    kbd{
+      font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+      font-size:12px; border:1px solid rgba(0,0,0,.2); border-bottom-width:2px;
+      padding:1px 6px; border-radius:6px; background:#fafafa;
+    }
+    .status{ margin-left:auto; font-size:13px; opacity:.9; white-space:nowrap; }
+    
+    .focalQuestionTa{
+  width:260px;
+  height:62px;
+  resize:vertical;
+  font-size:13px;
+  padding:8px;
+  border:1px solid rgba(0,0,0,.18);
+  border-radius:10px;
+  background:#fff;
+  box-sizing:border-box;
+}
+    #board{
+      position:relative; overflow:hidden;
+      background:
+        linear-gradient(var(--bg), var(--bg)),
+        repeating-linear-gradient(0deg, transparent, transparent 23px, var(--grid) 24px),
+        repeating-linear-gradient(90deg, transparent, transparent 23px, var(--grid) 24px);
+    }
+        /* MOBILE: evita che il pinch faccia zoom della pagina */
+    #board{ touch-action:none; }
+
+    /* contenitore trasformabile (pan/zoom) */
+    #world{
+     position:absolute;
+     left:0; top:0;
+     width:8000px;
+     height:8000px;
+     transform-origin: 0 0;
+    }
+
+    /* SVG: non blocca click su box */
+    svg{
+      position:absolute; inset:0;
+      width:100%; height:100%;
+      pointer-events:auto;
+    }
+
+    .pop{
+      position:absolute;
+      width:20ch;
+      max-width:48ch;
+      background:#fff;
+      border:1px solid rgba(0,0,0,.55);
+      border-radius:14px;
+      box-shadow:0 8px 24px rgba(0,0,0,.10);
+      padding:10px;
+      box-sizing:border-box;
+      user-select:none;
+      cursor:grab;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      touch-action: none;
+    }
+    .pop:active{ cursor:grabbing; }
+    .pop.selected{ outline:3px solid rgba(0,120,255,.25); }
+    .pop.linking{ background:rgba(0,120,255,.08)!important; border-color:rgba(0,120,255,.35)!important; }
+
+    .body{
+      width:100%;
+      border:0;
+      outline:0;
+      resize:none;
+      overflow:hidden;
+      background:transparent;
+      color:inherit;
+      font-size:14px;
+      line-height:1.25;
+      padding:0;
+      margin:0;
+      box-sizing:border-box;
+      min-height:1.25em;
+      white-space:pre-wrap;
+      word-break:break-word;
+      text-align:center;
+    }
+
+    .linkLine{
+      pointer-events:stroke;
+      cursor:pointer;
+      stroke: rgba(0,0,0,.55);
+      stroke-width: 2;
+      stroke-linecap: round;
+    }
+    .linkLine.selected{
+      stroke: rgba(0,120,255,.85);
+      stroke-width: 3;
+    }
+
+    .ghost{
+      position:absolute; inset:0; pointer-events:none;
+      display:flex; align-items:center; justify-content:center;
+      font-size:14px; opacity:.55;
+    }
+
+    @media print {
+  header { display:none !important; }
+  .ghost { display:none !important; }
+
+  /* Mantieni un'altezza reale al layout in stampa */
+  html, body { height: 100% !important; }
+  #app { height: 100% !important; }
+
+  /* Il board deve avere dimensioni stampabili */
+      #board{ touch-action:none; } /* importantissimo per pinch-zoom su mobile */
+
+    #world{
+      position:absolute;
+      inset:0;
+      transform-origin: 0 0;
+    }
+
+  #board {
+    background:#fff !important;
+    overflow: visible !important;
+    height: 100vh !important;   /* <-- CHIAVE: altrimenti svg=0 */
+  }
+
+  /* SVG deve occupare tutto il board in stampa */
+  #wires {
+    width: 100% !important;
+    height: 100% !important;
+  }
+  #board{ touch-action:none; } /* importantissimo per pinch-zoom su mobile */
+
+  #world{
+      position:absolute;
+      inset:0;
+      transform-origin: 0 0;
+  }
+
+  svg {
+    overflow: visible !important;
+  }
+}
+
+  @media print {
+
+  .focalQuestionTa{
+    display: block !important;
+    position: static !important;   /* ← FONDAMENTALE */
+    width: 100%;
+    margin: 0 0 12mm 0;
+
+    border: none !important;
+    outline: none !important;
+    resize: none !important;
+
+    font-size: 16pt;
+    font-weight: 600;
+    line-height: 1.3;
+    background: transparent !important;
+    color: #000;
+    white-space: pre-wrap;
+  }
+}
+
+   #mapTitle {
+     margin-left: auto;   /* lo spinge a destra nel header */
+     font-size: 22px;     /* dimensione del testo */
+     font-weight: 800;    /* molto in grassetto */
+     letter-spacing: 2px;/* spazio tra le lettere */
+     user-select: none;  /* non selezionabile */
+    }
+
+  </style>
+</head>
+
+<body>
+<div id="app">
+    
+  <header>
+    <button class="btn" id="btnNew">+ Nuovo pop</button>
+    <button class="btn" id="btnMove">Sposta</button>
+    <button class="btn" id="btnLink">Collega</button>
+    <button class="btn danger" id="btnDelete">Elimina</button>
+
+    <button class="btn" id="btnPdf">Esporta PDF</button>
+    <button class="btn" id="btnExportJson">Esporta JSON</button>
+    <button class="btn" id="btnExportHtml">Esporta HTML</button>
+    <button class="btn" id="btnImport">Importa</button>
+    <input id="fileInput" type="file" accept=".json,.html" style="display:none" />
+
+    <span class="hint">
+      Doppio click = crea • Trascina = sposta • <kbd>L</kbd>/Collega = collega • click linea = seleziona • <kbd>CANC</kbd>/Elimina = elimina • <kbd>ESC</kbd> = annulla
+    </span>
+    <span class="status" id="status">Avvio...</span>
+    <span id="mapTitle">MAPPA CONCETTUALE</span>
+  </header>
+  215: <textarea id="focalQuestion"
+  216:           class="focalQuestionTa"
+  217:           placeholder="Domanda focale...">
+  218: </textarea>
+
+
+    <div id="board">
+    <div id="world">
+      <svg id="wires"></svg>
+      <!-- i box .pop verranno inseriti qui dentro via JS -->
+    </div>
+    <div class="ghost">Doppio click sullo sfondo per creare un pop</div>
+  </div>
+
+<script>
+(function () {
+  // ---------- elementi ----------
+  var board = document.getElementById("board");
+  var svg = document.getElementById("wires");
+  var world = document.getElementById("world");
+  var statusEl = document.getElementById("status");
+      // --- DOM domanda focale ---
+  var focalTa = document.getElementById("focalQuestion");
+
+  var btnNew = document.getElementById("btnNew");
+  var btnLink = document.getElementById("btnLink");
+  var btnDelete = document.getElementById("btnDelete");
+  var btnPdf = document.getElementById("btnPdf");
+  var btnExportJson = document.getElementById("btnExportJson");
+  var btnExportHtml = document.getElementById("btnExportHtml");
+  var btnImport = document.getElementById("btnImport");
+  var btnMove = document.getElementById("btnMove");
+  var fileInput = document.getElementById("fileInput");
+
+  function setStatus(msg){ statusEl.textContent = msg; }
+  function uid(){ return Math.random().toString(36).slice(2, 10); }
+  function boardRect(){ return board.getBoundingClientRect(); }
+
+  // ---------- stato ----------
+  var pops = [];   // {id,x,y,text}
+  var links = [];  // {id,from,to}
+  var selectedBoxId = null;
+  var selectedLinkId = null;
+  var linkingFrom = null;
+  var moveMode = false;
+    // --- domanda focale (testo) ---
+  var focalQuestion = "";
+
+  function askFocalQuestionAtStart(){
+    var q = prompt("Qual è la domanda focale a cui questa mappa prova a rispondere?", "");
+    if (q === null) q = "";            // se annulla, lasciamo vuoto
+    focalQuestion = (q || "").trim();
+    if (focalTa) focalTa.value = focalQuestion;
+  }
+
+    // ---------- camera (pan/zoom) ----------
+  var camX = 0;
+  var camY = 0;
+  var camS = 1;
+
+  function applyCamera(){
+    world.style.transform = "translate(" + camX + "px," + camY + "px) scale(" + camS + ")";
+  }
+  applyCamera();
+
+  function screenToWorld(clientX, clientY){
+    var r = boardRect();
+    return {
+      x: (clientX - r.left - camX) / camS,
+      y: (clientY - r.top  - camY) / camS
+    };
+  }
+
+  function clampToBoard(x, y) {
+  // “spazio infinito”: non blocco a destra/in basso
+  if (x < 8) x = 8;
+  if (y < 8) y = 8;
+  return { x:x, y:y };
+}
+
+  function clearSelections() {
+    selectedBoxId = null;
+    selectedLinkId = null;
+    var a = document.querySelectorAll(".pop");
+    for (var i=0;i<a.length;i++) a[i].classList.remove("selected");
+    var b = document.querySelectorAll(".linkLine");
+    for (var j=0;j<b.length;j++) b[j].classList.remove("selected");
+  }
+
+  function selectBox(id) {
+    selectedBoxId = id;
+    selectedLinkId = null;
+    var a = document.querySelectorAll(".pop");
+    for (var i=0;i<a.length;i++) {
+      a[i].classList.toggle("selected", a[i].dataset.id === id);
+    }
+    var b = document.querySelectorAll(".linkLine");
+    for (var j=0;j<b.length;j++) b[j].classList.remove("selected");
+  }
+
+  function selectLink(id) {
+    selectedLinkId = id;
+    selectedBoxId = null;
+    var a = document.querySelectorAll(".linkLine");
+    for (var i=0;i<a.length;i++) {
+      a[i].classList.toggle("selected", a[i].dataset.linkid === id);
+    }
+    var b = document.querySelectorAll(".pop");
+    for (var j=0;j<b.length;j++) b[j].classList.remove("selected");
+  }
+
+  function setLinkMode(on) {
+    if (on) {
+      if (moveMode) setMoveMode(false);
+      if (!selectedBoxId) { setStatus("Seleziona un box prima di collegare."); return; }
+      linkingFrom = selectedBoxId;
+      btnLink.classList.add("active");
+      var a = document.querySelectorAll(".pop");
+      for (var i=0;i<a.length;i++) {
+        a[i].classList.toggle("linking", a[i].dataset.id === linkingFrom);
+      }
+      setStatus("Modalita collega: clicca un altro box.");
+    } else {
+      linkingFrom = null;
+      btnLink.classList.remove("active");
+      var b = document.querySelectorAll(".pop");
+      for (var j=0;j<b.length;j++) b[j].classList.remove("linking");
+      setStatus("Pronto");
+    }
+  }
+  function setMoveMode(on) {
+  moveMode = !!on;
+
+  if (moveMode) {
+    // se attivo sposta: disattivo collega
+    setLinkMode(false);
+    btnMove.classList.add("active");
+    setStatus("Modalita sposta: trascina i box.");
+  } else {
+    btnMove.classList.remove("active");
+    setStatus("Pronto");
+  }
+
+  // quando sposta è attivo, blocchiamo l'editing del testo
+  var tas = document.querySelectorAll(".pop .body");
+  for (var i = 0; i < tas.length; i++) {
+    tas[i].readOnly = moveMode;
+  }
+}
+  
+  function autoGrow(ta) {
+    ta.style.height = "auto";
+    ta.style.height = ta.scrollHeight + "px";
+  }
+
+  function createPop(x, y) {
+    var p = { id: uid(), x: x, y: y, text: "" };
+    pops.push(p);
+    render();
+    selectBox(p.id);
+  }
+
+  function addLink(from, to) {
+   if (!from || !to || from === to) return;
+
+   for (var i = 0; i < links.length; i++) {
+     if (links[i].from === from && links[i].to === to) return;
+   }
+
+   links.push({
+     id: uid(),
+     from: from,
+     to: to,
+     label: ""   // 👈 etichetta del connettore
+   });
+}
+
+  function deleteSelected() {
+    if (selectedLinkId) {
+      links = links.filter(function (l) { return l.id !== selectedLinkId; });
+      selectedLinkId = null;
+      renderLinks();
+      setStatus("Collegamento eliminato.");
+      return;
+    }
+    if (selectedBoxId) {
+      var id = selectedBoxId;
+      pops = pops.filter(function (p) { return p.id !== id; });
+      links = links.filter(function (l) { return l.from !== id && l.to !== id; });
+      selectedBoxId = null;
+      if (linkingFrom === id) setLinkMode(false);
+      render();
+      setStatus("Box eliminato.");
+      return;
+    }
+    setStatus("Nessuna selezione.");
+  }
+
+    function getPopBoxInBoardCoords(id) {
+    var el = document.querySelector('.pop[data-id="'+id+'"]');
+    if (!el) return null;
+
+    var r = el.getBoundingClientRect();
+    var br = boardRect();
+
+    // convertiamo da coordinate schermo a coordinate world (prima della transform)
+    var x = (r.left - br.left - camX) / camS;
+    var y = (r.top  - br.top  - camY) / camS;
+
+    var w = r.width  / camS;
+    var h = r.height / camS;
+
+    return {
+      cx: x + w/2, cy: y + h/2,
+      hw: w/2, hh: h/2
+    };
+  }
+
+  function edgePoint(cx, cy, hw, hh, dx, dy) {
+    if (dx === 0 && dy === 0) return { x: cx, y: cy };
+    var tx = Math.abs(dx) / hw;
+    var ty = Math.abs(dy) / hh;
+    var t = 1 / Math.max(tx, ty);
+    return { x: cx + dx * t, y: cy + dy * t };
+  }
+
+  function renderLinks() {
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+
+    var NS = "http://www.w3.org/2000/svg";
+
+    // defs + freccia
+    var defs = document.createElementNS(NS, "defs");
+    var marker = document.createElementNS(NS, "marker");
+    marker.setAttribute("id", "arrow");
+    marker.setAttribute("viewBox", "0 0 10 10");
+    marker.setAttribute("refX", "9");
+    marker.setAttribute("refY", "5");
+    marker.setAttribute("markerWidth", "7");
+    marker.setAttribute("markerHeight", "7");
+    marker.setAttribute("orient", "auto");
+    marker.setAttribute("markerUnits", "strokeWidth");
+
+    var path = document.createElementNS(NS, "path");
+    path.setAttribute("d", "M 0 0 L 10 5 L 0 10 z");
+    path.setAttribute("fill", "rgba(0,0,0,.55)");
+    marker.appendChild(path);
+    defs.appendChild(marker);
+    svg.appendChild(defs);
+
+    links.forEach(function (l) {
+      var A = getPopBoxInBoardCoords(l.from);
+      var B = getPopBoxInBoardCoords(l.to);
+      if (!A || !B) return;
+
+      var dx = B.cx - A.cx;
+      var dy = B.cy - A.cy;
+
+      var p1 = edgePoint(A.cx, A.cy, A.hw, A.hh, dx, dy);
+      var p2 = edgePoint(B.cx, B.cy, B.hw, B.hh, -dx, -dy);
+
+      // linea
+      var line = document.createElementNS(NS, "line");
+      line.setAttribute("x1", p1.x);
+      line.setAttribute("y1", p1.y);
+      line.setAttribute("x2", p2.x);
+      line.setAttribute("y2", p2.y);
+      line.setAttribute("marker-end", "url(#arrow)");
+      line.classList.add("linkLine");
+      line.dataset.linkid = l.id;
+
+      if (l.id === selectedLinkId) line.classList.add("selected");
+
+      line.addEventListener("mousedown", function (e) {
+        e.stopPropagation();
+        setLinkMode(false);
+        selectLink(l.id);
+        setStatus("Link selezionato.");
+      });
+
+      svg.appendChild(line);
+
+            // ---------- ETICHETTA (solo testo, senza cornice) ----------
+      if (l.label && l.label.trim() !== "") {
+        var txt = document.createElementNS(NS, "text");
+
+        // centro della linea
+        var tx = (p1.x + p2.x) / 2;
+        var ty = (p1.y + p2.y) / 2;
+
+        // un pelo sopra la linea (così non si sovrappone)
+        ty = ty - 8;
+
+        txt.setAttribute("x", tx);
+        txt.setAttribute("y", ty);
+        txt.setAttribute("text-anchor", "middle");
+        txt.setAttribute("dominant-baseline", "middle");
+        txt.setAttribute("fill", "#000");
+        txt.setAttribute("font-size", "13");
+        txt.style.cursor = "pointer";
+        txt.style.pointerEvents = "auto";
+
+        txt.textContent = l.label;
+        txt.dataset.linkid = l.id;
+
+        // click sull'etichetta per modificarla
+        txt.addEventListener("mousedown", function (e) {
+          e.stopPropagation();
+          var id = this.dataset.linkid;
+
+          for (var k = 0; k < links.length; k++) {
+            if (links[k].id === id) {
+              var nuovo = prompt("Etichetta del collegamento:", links[k].label || "");
+              if (nuovo !== null) links[k].label = nuovo;
+              break;
+            }
+          }
+          renderLinks();
+        });
+
+        // --- SFONDO dietro il testo (copre la linea sotto) ---
+        // 1) aggiungo temporaneamente il testo per misurarlo
+        svg.appendChild(txt);
+        var bb = txt.getBBox();
+
+        var padX = 6;
+        var padY = 3;
+
+        var bg = document.createElementNS(NS, "rect");
+        bg.setAttribute("x", bb.x - padX);
+        bg.setAttribute("y", bb.y - padY);
+        bg.setAttribute("width", bb.width + padX * 2);
+        bg.setAttribute("height", bb.height + padY * 2);
+        bg.setAttribute("rx", 4);
+        bg.setAttribute("ry", 4);
+
+        // stesso colore dello sfondo della tua app (nel CSS: --bg:#f6f7fb)
+        // colore di default (schermo)
+        var labelBg = "#f6f7fb";
+
+        // se siamo in stampa, usa bianco
+        if (window.matchMedia && window.matchMedia("print").matches) {
+        labelBg = "#ffffff";
+        }
+
+        bg.setAttribute("fill", labelBg);
+
+        bg.setAttribute("stroke", "none");
+        bg.style.pointerEvents = "none";
+
+        // 2) rimetto ordine: prima bg, poi txt
+        svg.removeChild(txt);
+        svg.appendChild(bg);
+        svg.appendChild(txt);
+      }
+    });
+  }
+
+  function render() {
+    var old = world.querySelectorAll(".pop");
+    for (var i=0;i<old.length;i++) old[i].remove();
+
+    var ghost = board.querySelector(".ghost");
+    if (ghost) ghost.style.display = pops.length ? "none" : "flex";
+
+    pops.forEach(function (p) {
+      var el = document.createElement("div");
+      el.className = "pop";
+      el.dataset.id = p.id;
+      el.style.left = p.x + "px";
+      el.style.top  = p.y + "px";
+
+      el.innerHTML = '<textarea class="body" spellcheck="false"></textarea>';
+      var ta = el.querySelector(".body");
+      ta.value = p.text || "";
+      autoGrow(ta);
+
+      if (p.id === selectedBoxId) el.classList.add("selected");
+      if (p.id === linkingFrom) el.classList.add("linking");
+
+      ta.addEventListener("focus", function () { selectBox(p.id); });
+      ta.addEventListener("mousedown", function (e) {
+        selectBox(p.id);
+        if (linkingFrom && linkingFrom !== p.id) e.preventDefault();
+      });
+
+      ta.addEventListener("input", function (e) {
+        p.text = e.target.value;
+        autoGrow(ta);
+        renderLinks();
+      });
+
+      // click ovunque nel box: se in modalita collega, crea link
+      el.addEventListener("click", function () {
+        if (linkingFrom && linkingFrom !== p.id) {
+         addLink(linkingFrom, p.id);
+
+         // chiedi subito l'etichetta
+         var last = links[links.length - 1];
+         var t = prompt("Etichetta del collegamento:", "");
+         if (t !== null) last.label = t;
+
+         setLinkMode(false);
+         renderLinks();
+         setStatus("Collegamento creato.");
+
+        }
+      });
+
+      // drag solo fuori textarea
+      var dragging = false, sx=0, sy=0, ox=0, oy=0;
+
+      el.addEventListener("pointerdown", function (e) {
+      // Su touch spesso e.button non è 0: quindi non blocchiamo
+         if (e.pointerType === "mouse" && e.button !== 0) return;
+
+       // Se NON siamo in modalita sposta e sto toccando la textarea, non trascinare
+         if (!moveMode && e.target && e.target.tagName && e.target.tagName.toLowerCase() === "textarea") return;
+
+         e.preventDefault();     // evita scroll/zoom mentre trascini
+         e.stopPropagation();
+
+         setLinkMode(false);
+         selectBox(p.id);
+
+         dragging = true;
+         sx = e.clientX; sy = e.clientY;
+         ox = p.x; oy = p.y;
+
+         // cattura il puntatore: fondamentale su mobile
+         if (el.setPointerCapture) el.setPointerCapture(e.pointerId);
+
+         function onMove(ev) {
+           if (!dragging) return;
+           var dx = (ev.clientX - sx) / camS;
+           var dy = (ev.clientY - sy) / camS;
+           var pos = clampToBoard(ox + dx, oy + dy);
+           p.x = pos.x; p.y = pos.y;
+           el.style.left = p.x + "px";
+           el.style.top  = p.y + "px";
+           renderLinks();
+         }
+
+         function onUp(ev) {
+           dragging = false;
+           window.removeEventListener("pointermove", onMove);
+           window.removeEventListener("pointerup", onUp);
+         }
+
+          window.addEventListener("pointermove", onMove, { passive:false });
+          window.addEventListener("pointerup", onUp, { passive:true });
+});
+
+            world.appendChild(el);
+    });
+
+    renderLinks();
+  }
+
+  // ---------- export/import/pdf ----------
+  function getState() {
+    return { version: 1, createdAt: new Date().toISOString(), pops: pops, links: links };
+  }
+
+  function downloadBlob(name, blob) {
+    var a = document.createElement("a");
+    var url = URL.createObjectURL(blob);
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  }
+
+  function exportJSON() {
+    var blob = new Blob([JSON.stringify(getState(), null, 2)], { type: "application/json;charset=utf-8" });
+    var name = "mappa_" + new Date().toISOString().slice(0,19).split(":").join("-") + ".json";
+    downloadBlob(name, blob);
+    setStatus("Esportato JSON.");
+  }
+
+function exportHTML() {
+  var state = JSON.stringify(getState(), null, 2);
+
+  var html =
+    '<!doctype html>' +
+    '<html lang="it">' +
+    '<head>' +
+    '<meta charset="utf-8"/>' +
+    '<meta name="viewport" content="width=device-width, initial-scale=1"/>' +
+    '<title>Mappa esportata</title>' +
+    '</head>' +
+    '<body>' +
+    '<h3>Mappa esportata</h3>' +
+    '<p>Importa questo file nell\'app con il pulsante Importa.</p>' +
+    '<textarea id="popplet_export_data" style="display:none;">' +
+    state +
+    '</textarea>' +
+    '</body>' +
+    '</html>';
+
+  var blob = new Blob([html], { type: "text/html;charset=utf-8" });
+  var name = "mappa_" + new Date().toISOString().slice(0,19).replace(/:/g,'-') + ".html";
+  downloadBlob(name, blob);
+  setStatus("Esportato HTML.");
+}
+  
+function parseImportedText(text) {
+  var t = (text || "").trim();
+
+  // Caso 1: JSON puro
+  if (t.charAt(0) === "{" || t.charAt(0) === "[") {
+    return JSON.parse(t);
+  }
+
+  // Caso 2: HTML esportato (textarea nascosta)
+  var re = /<textarea[^>]*id=["']popplet_export_data["'][^>]*>([\s\S]*?)<\/textarea>/i;
+  var m = text.match(re);
+  if (!m) throw new Error("File non riconosciuto");
+
+  return JSON.parse(m[1]);
+}
+
+  function applyState(state) {
+    if (!state || !state.pops || !state.links) throw new Error("Dati incompleti");
+    pops = state.pops;
+    links = state.links;
+    clearSelections();
+    setLinkMode(false);
+    render();
+    setStatus("Import OK.");
+  }
+
+  function doImport() {
+    fileInput.value = "";
+    fileInput.click();
+  }
+
+  fileInput.addEventListener("change", function (e) {
+    var file = e.target.files && e.target.files[0];
+    if (!file) return;
+    file.text().then(function (text) {
+      var state = parseImportedText(text);
+      applyState(state);
+    }).catch(function (err) {
+      console.error(err);
+      setStatus("Errore import.");
+      alert("Import fallito: usa un file esportato da questa app (JSON o HTML).");
+    });
+  });
+
+  function exportPDF() {
+    setStatus("Stampa: scegli Salva come PDF.");
+    window.print();
+  }
+
+  // ---------- eventi ----------
+  // ---------- PAN + PINCH ZOOM (mobile) ----------
+  var pointers = new Map();
+  var pinchStartDist = 0;
+  var pinchStartS = 1;
+  var pinchStartMid = null;
+  var panStart = null;
+
+  function dist(a,b){
+    var dx = a.x - b.x, dy = a.y - b.y;
+    return Math.sqrt(dx*dx + dy*dy);
+  }
+  function mid(a,b){
+    return { x:(a.x+b.x)/2, y:(a.y+b.y)/2 };
+  }
+
+  board.addEventListener("pointerdown", function(e){
+    // solo sfondo (non un box)
+    if (e.target && e.target.closest && e.target.closest(".pop")) return;
+
+    pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
+    board.setPointerCapture(e.pointerId);
+
+    if (pointers.size === 1) {
+      panStart = { x:e.clientX, y:e.clientY, camX:camX, camY:camY };
+    } else if (pointers.size === 2) {
+      var arr = Array.from(pointers.values());
+      pinchStartDist = dist(arr[0], arr[1]);
+      pinchStartS = camS;
+      pinchStartMid = mid(arr[0], arr[1]);
+    }
+  }, { passive:false });
+
+  board.addEventListener("pointermove", function(e){
+    if (!pointers.has(e.pointerId)) return;
+    pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
+
+    if (pointers.size === 1 && panStart) {
+      var p = Array.from(pointers.values())[0];
+      camX = panStart.camX + (p.x - panStart.x);
+      camY = panStart.camY + (p.y - panStart.y);
+      applyCamera();
+      renderLinks();
+    }
+
+    if (pointers.size === 2) {
+      var arr = Array.from(pointers.values());
+      var d = dist(arr[0], arr[1]);
+      if (!pinchStartDist) return;
+
+      var newS = pinchStartS * (d / pinchStartDist);
+      if (newS < 0.25) newS = 0.25;
+      if (newS > 4.0) newS = 4.0;
+
+      // mantieni il punto medio sotto le dita
+      var m = mid(arr[0], arr[1]);
+
+      // coord mondo del mid prima del cambio scala
+      var w0 = screenToWorld(pinchStartMid.x, pinchStartMid.y);
+
+      camS = newS;
+
+      var r = boardRect();
+      camX = m.x - r.left - (w0.x * camS);
+      camY = m.y - r.top  - (w0.y * camS);
+
+      applyCamera();
+      renderLinks();
+    }
+  }, { passive:false });
+
+  board.addEventListener("pointerup", function(e){
+    pointers.delete(e.pointerId);
+    if (pointers.size < 2) pinchStartDist = 0;
+    if (pointers.size === 0) panStart = null;
+  }, { passive:true });
+
+  board.addEventListener("pointercancel", function(e){
+    pointers.delete(e.pointerId);
+    if (pointers.size < 2) pinchStartDist = 0;
+    if (pointers.size === 0) panStart = null;
+  }, { passive:true });
+
+  board.addEventListener("mousedown", function (e) {
+    if (e.target === board) {
+      clearSelections();
+      setLinkMode(false);
+      setStatus("Pronto");
+    }
+  });
+
+  board.addEventListener("dblclick", function (e) {
+    if (e.target && e.target.closest && e.target.closest(".pop")) return;
+    var w = screenToWorld(e.clientX, e.clientY);
+    var pos = clampToBoard(w.x, w.y);
+    createPop(pos.x, pos.y);
+  });
+
+  window.addEventListener("keydown", function (e) {
+    var key = (e.key || "").toLowerCase();
+    if (key === "delete" || key === "backspace") {
+      var active = document.activeElement;
+      var inEditor = active && active.tagName === "TEXTAREA";
+      if (!inEditor) { e.preventDefault(); deleteSelected(); }
+    }
+    if (key === "l") { linkingFrom ? setLinkMode(false) : setLinkMode(true); }
+    if (key === "escape") setLinkMode(false);
+  });
+
+  // ---------- bottoni ----------
+  btnNew.addEventListener("click", function () {
+  var r = boardRect();
+  var cx = r.left + r.width/2;
+  var cy = r.top  + r.height/2;
+  var w = screenToWorld(cx, cy);
+  createPop(w.x, w.y);
+});
+  
+  btnLink.addEventListener("click", function () { setLinkMode(!linkingFrom); });
+  btnDelete.addEventListener("click", deleteSelected);
+  btnMove.addEventListener("click", function () { setMoveMode(!moveMode); });
+
+  btnPdf.addEventListener("click", exportPDF);
+  btnExportJson.addEventListener("click", exportJSON);
+  btnExportHtml.addEventListener("click", exportHTML);
+  btnImport.addEventListener("click", doImport);
+
+  // ---------- init ----------
+  askFocalQuestionAtStart();
+  if (focalTa) {
+  focalTa.addEventListener("input", function () {
+    if (this.value.trim() === "") {
+      this.setAttribute("data-empty", "1");
+    } else {
+      this.removeAttribute("data-empty");
+    }
+  });
+}
+  render();
+    if (focalTa) {
+    focalTa.addEventListener("input", function(){
+      focalQuestion = this.value;
+    });
+  }
+  setStatus("Pronto");
+})();
+</script>
+</body>
+</html>
