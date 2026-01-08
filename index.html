@@ -530,37 +530,45 @@
         txt.style.cursor = "pointer";
         txt.style.pointerEvents = "auto";
 
-        txt.textContent = l.label;
+      txt.textContent = l.label;
         txt.dataset.linkid = l.id;
 
-        
+        // blocca il pan/sposta quando tocchi l'etichetta
+        txt.addEventListener("pointerdown", function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+        });
+
         // click sull'etichetta per modificarla
         txt.addEventListener("mousedown", function (e) {
-         e.stopPropagation();
-         var id = this.dataset.linkid;
+          e.preventDefault();
+          e.stopPropagation();
 
-        // esci comunque dalla modalità collega, se attiva
-         setLinkMode(false);
+          var id = this.dataset.linkid;
 
-       // seleziona il link (solo feedback visivo)
-         selectLink(id);
+          // esci comunque dalla modalità collega e sposta, se attive
+          setLinkMode(false);
+          setMoveMode(false);
 
-      // modifica l'etichetta
-         for (var k = 0; k < links.length; k++) {
-          if (links[k].id === id) {
-           var nuovo = prompt("Etichetta del collegamento:", links[k].label || "");
-           if (nuovo !== null) links[k].label = nuovo;
-           break;
-         }
-      }
+          // seleziona il link (solo feedback visivo)
+          selectLink(id);
 
-       // ridisegna le linee
-         renderLinks();
+          // modifica l'etichetta
+          for (var k = 0; k < links.length; k++) {
+            if (links[k].id === id) {
+              var nuovo = prompt("Etichetta del collegamento:", links[k].label || "");
+              if (nuovo !== null) links[k].label = nuovo;
+              break;
+            }
+          }
 
-      // torna subito in stato neutro: niente freccia "agganciata"
-         clearSelections();
-        setStatus("Pronto");
-    });
+          // ridisegna le linee
+          renderLinks();
+
+          // torna subito in stato neutro: niente freccia "agganciata"
+          clearSelections();
+          setStatus("Pronto");
+        });
 
         // --- SFONDO dietro il testo (copre la linea sotto) ---
         // 1) aggiungo temporaneamente il testo per misurarlo
