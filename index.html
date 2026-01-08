@@ -530,27 +530,21 @@
         txt.style.cursor = "pointer";
         txt.style.pointerEvents = "auto";
 
-      txt.textContent = l.label;
+              txt.textContent = l.label;
         txt.dataset.linkid = l.id;
-
-        // blocca il pan/sposta quando tocchi l'etichetta
-        txt.addEventListener("pointerdown", function (e) {
-          e.preventDefault();
-          e.stopPropagation();
-        });
 
         // click sull'etichetta per modificarla
         txt.addEventListener("mousedown", function (e) {
-          e.preventDefault();
+          // impedisce al board di ricevere l'evento (quindi niente sposta/pan)
           e.stopPropagation();
 
           var id = this.dataset.linkid;
 
-          // esci comunque dalla modalità collega e sposta, se attive
+          // esci comunque da collega e sposta, se attive
           setLinkMode(false);
           setMoveMode(false);
 
-          // seleziona il link (solo feedback visivo)
+          // seleziona il link (feedback visivo)
           selectLink(id);
 
           // modifica l'etichetta
@@ -565,7 +559,7 @@
           // ridisegna le linee
           renderLinks();
 
-          // torna subito in stato neutro: niente freccia "agganciata"
+          // torna in stato neutro
           clearSelections();
           setStatus("Pronto");
         });
