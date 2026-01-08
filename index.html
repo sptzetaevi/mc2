@@ -530,21 +530,26 @@
         txt.style.cursor = "pointer";
         txt.style.pointerEvents = "auto";
 
-              txt.textContent = l.label;
+                     txt.textContent = l.label;
         txt.dataset.linkid = l.id;
 
-        // click sull'etichetta per modificarla
+        // blocca il PAN quando il puntatore parte dall'etichetta
+        txt.addEventListener("pointerdown", function (e) {
+          // importante: NON fare preventDefault, altrimenti non arrivano gli eventi mouse
+          e.stopPropagation();
+        });
+
+        // click (mousedown) sull'etichetta per modificarla
         txt.addEventListener("mousedown", function (e) {
-          // impedisce al board di ricevere l'evento (quindi niente sposta/pan)
           e.stopPropagation();
 
           var id = this.dataset.linkid;
 
-          // esci comunque da collega e sposta, se attive
+          // esci comunque da collega e sposta
           setLinkMode(false);
           setMoveMode(false);
 
-          // seleziona il link (feedback visivo)
+          // feedback visivo
           selectLink(id);
 
           // modifica l'etichetta
@@ -556,8 +561,10 @@
             }
           }
 
-          // ridisegna le linee
           renderLinks();
+          clearSelections();
+          setStatus("Pronto");
+        });
 
           // torna in stato neutro
           clearSelections();
@@ -818,8 +825,8 @@ function parseImportedText(text) {
   }
 
   board.addEventListener("pointerdown", function(e){
-    // solo sfondo (non un box)
-    if (e.target && e.target.closest && e.target.closest(".pop")) return;
+    // solo sfondo: NON box e NON elementi SVG (frecce / etichette)
+   if (e.target && e.target.closest && (e.target.closest(".pop") || e.target.closest("svg"))) return;
 
     pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
     board.setPointerCapture(e.pointerId);
