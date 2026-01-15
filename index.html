@@ -3,18 +3,40 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>mappificio</title>
+  <title>m_mentale</title>
   <style>
     :root { --bg:#f6f7fb; --grid:rgba(0,0,0,.06); --ink:#1a1a1a; }
 
     html, body { height:100%; margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; color:var(--ink); }
-    #app { height:100%; display:grid; grid-template-rows:auto auto 1fr; }
+    #app { height:100%; display:grid; grid-template-rows:auto 1fr; }
 
+    /* HEADER con wrapper interno + maniglia */
     header{
-      display:flex; gap:10px; flex-wrap:wrap; align-items:center; padding:10px 12px;
-      background:#fff; border-bottom:1px solid rgba(0,0,0,.08);
-      position:sticky; top:0; z-index:10;
+      position:sticky;
+      top:0;
+      z-index:10;
+      background:#fff;
+      border-bottom:1px solid rgba(0,0,0,.08);
+      box-shadow:0 2px 6px rgba(0,0,0,.06);
+      box-sizing:border-box;
     }
+    .headerInner{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      padding:10px 12px;
+    }
+    .headerHandle{
+      width:100%;
+      height:8px;
+      background:rgba(0,0,0,.20);
+      cursor:pointer;
+    }
+    header.collapsed .headerInner{
+      display:none;
+    }
+
     .btn{
       border:1px solid rgba(0,0,0,.18);
       background:#fff;
@@ -33,80 +55,118 @@
     .btn.danger{ border-color: rgba(200,0,0,.28); }
     .btn.danger:hover{ background: rgba(200,0,0,.06); }
 
-    .hint{ font-size:13px; opacity:.75; flex: 1 1 520px; }
+    .hint{ font-size:13px; opacity:.75; flex: 1 1 320px; }
     kbd{
       font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
       font-size:12px; border:1px solid rgba(0,0,0,.2); border-bottom-width:2px;
       padding:1px 6px; border-radius:6px; background:#fafafa;
     }
-    .status{ margin-left:auto; font-size:13px; opacity:.9; white-space:nowrap; }
-    
-    .focalQuestionTa{
-  width:260px;
-  height:62px;
-  resize:vertical;
-  font-size:13px;
-  padding:8px;
-  margin:10px 12px 0 12px;   /* 👈 QUI */
-  border:1px solid rgba(0,0,0,.18);
-  border-radius:10px;
-  background:#fff;
-  box-sizing:border-box;
-}
+    .status{ font-size:13px; opacity:.9; white-space:nowrap; }
+
+    .textControls{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      font-size:13px;
+      white-space:nowrap;
+    }
+    .textControls input[type="color"]{
+      width:26px;
+      height:26px;
+      padding:0;
+      border-radius:6px;
+      border:1px solid rgba(0,0,0,.18);
+      background:#fff;
+      cursor:pointer;
+    }
+    .btn.tiny{
+      padding:4px 7px;
+      font-size:12px;
+      border-radius:8px;
+    }
+    .btn.tiny.active{
+      border-color: rgba(0,120,255,.7);
+      box-shadow:0 0 0 2px rgba(0,120,255,.22);
+    }
 
     #board{
       position:relative; overflow:hidden;
+      touch-action: none;
       background:
         linear-gradient(var(--bg), var(--bg)),
         repeating-linear-gradient(0deg, transparent, transparent 23px, var(--grid) 24px),
         repeating-linear-gradient(90deg, transparent, transparent 23px, var(--grid) 24px);
     }
-        /* MOBILE: evita che il pinch faccia zoom della pagina */
-    #board{ touch-action:none; }
-
-    /* contenitore trasformabile (pan/zoom) */
-    #world{
-     position:absolute;
-     left:0; top:0;
-     width:8000px;
-     height:8000px;
-     transform-origin: 0 0;
+    #viewport{
+      position:absolute;
+      left:0; top:0;
+      width:8000px;
+      height:8000px;
+      transform-origin: 0 0;
     }
 
-    /* SVG: non blocca click su box */
+    #world{
+      position:absolute;
+      left:0;
+      top:0;
+      width:100%;
+      height:100%;
+      pointer-events:none;
+    }
+
     svg{
       position:absolute; inset:0;
-      width:100%; height:100%;
+      width:100%;
+      height:100%;
+      overflow:visible;
       pointer-events:auto;
     }
 
     .pop{
       position:absolute;
-      width:20ch;
-      max-width:48ch;
+
+      /* 👉 niente width fissa */
+      min-width:20ch;      /* allarga a ~20 caratteri */
+      max-width:32ch;      /* limite massimo */
+
       background:#fff;
       border:1px solid rgba(0,0,0,.55);
       border-radius:14px;
       box-shadow:0 8px 24px rgba(0,0,0,.10);
-      padding:10px;
+      padding:6px;            /* leggermente più contenuto anche il padding orizzontale */
       box-sizing:border-box;
       user-select:none;
       cursor:grab;
-      display:flex;
+
+      /* 👉 inline-flex = il box si adatta alla larghezza del contenuto,
+         invece di occupare più spazio del necessario */
+      display:inline-flex;
       align-items:center;
       justify-content:center;
-      touch-action: none;
+
+      touch-action:none;
+      pointer-events:auto;
     }
+
+    .pop:focus-within{
+      /* quando il textarea interno è in focus, il box si allarga a 20 "battute" */
+      min-width:20ch;
+    }
+
     .pop:active{ cursor:grabbing; }
     .pop.selected{ outline:3px solid rgba(0,120,255,.25); }
     .pop.linking{ background:rgba(0,120,255,.08)!important; border-color:rgba(0,120,255,.35)!important; }
 
     .body{
-      width:100%;
+      /* 👉 lascia decidere alla textarea quanto essere larga,
+         senza forzarla a riempire il box */
+      width:100%;       /* prende tutta la larghezza del POP */
+      max-width:none;   /* nessun limite interno */
+
       border:0;
       outline:0;
       resize:none;
-      overflow:hidden;
+      overflow-y:auto;
       background:transparent;
       color:inherit;
       font-size:14px;
@@ -116,19 +176,26 @@
       box-sizing:border-box;
       min-height:1.25em;
       white-space:pre-wrap;
-      word-break:break-word;
+      word-break:normal;
+      text-align:center;
+    }
+
+    /* stile del placeholder dentro il POP */
+    .body::placeholder{
+      color:rgba(0,0,0,.45);
+      font-size:12px;
       text-align:center;
     }
 
     .linkLine{
       pointer-events:stroke;
+      fill: none;
       cursor:pointer;
       stroke: rgba(0,0,0,.55);
       stroke-width: 2;
       stroke-linecap: round;
     }
     .linkLine.selected{
-      stroke: rgba(0,120,255,.85);
       stroke-width: 3;
     }
 
@@ -138,119 +205,222 @@
       font-size:14px; opacity:.55;
     }
 
+    /* ✅ Controlli flottanti in basso a destra/sinistra */
+    #controlsRight {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 999;
+    }
+
+    #controlsLeft {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 999;
+    }
+
+    #controlsRight .btn,
+    #controlsLeft .btn {
+      pointer-events: auto;
+    }
+
+    /* Nascondo i bottoni originali nel header,
+       ma li tengo nel DOM per riusare tutta la logica JS */
+    #btnZoomIn,
+    #btnZoomOut,
+    #btnPan,
+    #btnMove,
+    #btnLink {
+      display: none !important;
+    }
+
     @media print {
-  header { display:none !important; }
-  .ghost { display:none !important; }
+      header { display:none !important; }
+      .ghost { display:none !important; }
 
-  /* Mantieni un'altezza reale al layout in stampa */
-  html, body { height: 100% !important; }
-  #app { height: 100% !important; }
+      html, body { height: 100% !important; }
+      #app { height: 100% !important; }
 
-  /* Il board deve avere dimensioni stampabili */
-      #board{ touch-action:none; } /* importantissimo per pinch-zoom su mobile */
+      #board {
+        background:#fff !important;
+        overflow: visible !important;
+        height: 100vh !important;
+      }
 
-    #world{
-      position:absolute;
-      inset:0;
-      transform-origin: 0 0;
+      #wires {
+        width: 100% !important;
+        height: 100% !important;
+      }
+
+      svg {
+        overflow: visible !important;
+      }
     }
 
-  #board {
-    background:#fff !important;
-    overflow: visible !important;
-    height: 100vh !important;   /* <-- CHIAVE: altrimenti svg=0 */
-  }
-
-  /* SVG deve occupare tutto il board in stampa */
-  #wires {
-    width: 100% !important;
-    height: 100% !important;
-  }
-  #board{ touch-action:none; } /* importantissimo per pinch-zoom su mobile */
-
-  #world{
-      position:absolute;
-      inset:0;
-      transform-origin: 0 0;
-  }
-
-  svg {
-    overflow: visible !important;
-  }
-}
-
-  @media print {
-
-  .focalQuestionTa{
-    display: block !important;
-    position: static !important;   /* ← FONDAMENTALE */
-    width: 100%;
-    margin: 0 0 12mm 0;
-
-    border: none !important;
-    outline: none !important;
-    resize: none !important;
-
-    font-size: 16pt;
-    font-weight: 600;
-    line-height: 1.3;
-    background: transparent !important;
-    color: #000;
-    white-space: pre-wrap;
-  }
-}
-
-   #mapTitle {
-     margin-left: auto;   /* lo spinge a destra nel header */
-     font-size: 22px;     /* dimensione del testo */
-     font-weight: 800;    /* molto in grassetto */
-     letter-spacing: 2px;/* spazio tra le lettere */
-     user-select: none;  /* non selezionabile */
+    #mapTitle {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      user-select: none;
+      margin-left:auto;
     }
 
+    .homeLogo{
+      margin-left: 10px;
+      text-decoration: none;
+    }
+    .homeLogo .logoLetters{
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      border: 2px solid rgba(0,0,0,.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: 2px;
+      color: var(--ink);
+      background: #fff;
+      box-shadow: 0 2px 6px rgba(0,0,0,.12);
+      transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+    }
+    .homeLogo:hover .logoLetters{
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(0,0,0,.16);
+      border-color: rgba(0,120,255,.6);
+    }
+
+    /* POPUP generici */
+    .modalOverlay{
+      position:fixed; inset:0;
+      background:rgba(0,0,0,.35);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:9999;
+    }
+    .modal{
+      width:min(420px, 92vw);
+      background:#fff;
+      border:1px solid rgba(0,0,0,.25);
+      border-radius:16px;
+      box-shadow:0 16px 50px rgba(0,0,0,.20);
+      padding:14px;
+    }
+    .modal h3{ margin:0 0 10px 0; font-size:16px; }
+    .modal .row{ display:flex; gap:12px; flex-wrap:wrap; margin:10px 0; }
+    .modal label{ display:flex; gap:8px; align-items:center; font-size:14px; cursor:pointer; }
+    .modal .actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:12px; }
   </style>
 </head>
 
 <body>
 <div id="app">
     
-  <header>
-    <button class="btn" id="btnNew">+ Nuovo pop</button>
-    <button class="btn" id="btnMove">Sposta</button>
-    <button class="btn" id="btnLink">Collega</button>
-    <button class="btn danger" id="btnDelete">Elimina</button>
+  <header id="mainHeader">
+    <div class="headerInner">
+      <button class="btn" id="btnNew">+ Nuovo pop</button>
+      <button class="btn" id="btnMove">Sposta</button>
+      <button class="btn" id="btnLink">Collega</button>
+      <button class="btn danger" id="btnDelete">Elimina</button>
 
-    <button class="btn" id="btnPdf">Esporta PDF</button>
-    <button class="btn" id="btnExportJson">Esporta JSON</button>
-    <button class="btn" id="btnExportHtml">Esporta HTML</button>
-    <button class="btn" id="btnImport">Importa</button>
-    <input id="fileInput" type="file" accept=".json,.html" style="display:none" />
+      <button class="btn" id="btnPdf">Stampa in PDF</button>
+      <button class="btn" id="btnExportJson">salva in JSON</button>
+      <button class="btn" id="btnExportHtml">salva in HTML</button>
+      <button class="btn" id="btnImport">Importa HTML/JSON</button>
+      <input id="fileInput" type="file" accept=".json,.html" style="display:none" />
 
-    <span class="hint">
-      Doppio click = crea • Trascina = sposta • <kbd>L</kbd>/Collega = collega • click linea = seleziona • <kbd>CANC</kbd>/Elimina = elimina • <kbd>ESC</kbd> = annulla
-    </span>
-    <span class="status" id="status">Avvio...</span>
-    <span id="mapTitle">MAPPA CONCETTUALE</span>
-    </header>
-    <textarea id="focalQuestion" class="focalQuestionTa" placeholder="Domanda focale..."></textarea>
+      <button class="btn tiny" id="btnZoomIn">+</button>
+      <button class="btn tiny" id="btnZoomOut">-</button>
+      <button class="btn tiny" id="btnPan" title="Pan vista">
+        <span aria-hidden="true">✋</span>
+      </button>
+      <button class="btn tiny" id="btnKeyboardHelp">Comandi da tastiera</button>
 
-    <div id="board">
-    <div id="world">
-      <svg id="wires"></svg>
-      <!-- i box .pop verranno inseriti qui dentro via JS -->
+      <div class="textControls">
+        <span>Testo:</span>
+        <input type="color" id="txtColor" value="#000000" disabled>
+        <button class="btn tiny" id="btnSizeSmall" disabled>A-</button>
+        <button class="btn tiny" id="btnSizeLarge" disabled>A+</button>
+        <button class="btn tiny" id="btnBold" disabled><b>B</b></button>
+      </div>
+
+      <span class="status" id="status">Avvio...</span>
+      <span id="mapTitle">MAPPA MENTALE</span>
+
+      <a class="homeLogo"
+         href="https://sptzetaevi.github.io/antimappificio/"
+         title="Torna alla pagina principale ANTIMAPPIFICIO">
+        <span class="logoLetters">A&nbsp;M</span>
+      </a>
     </div>
+
+    <div class="headerHandle" id="headerHandle" title="Mostra/nascondi strumenti"></div>
+  </header>
+
+  <div id="board">
+    <div id="viewport">
+      <svg id="wires"></svg>
+      <div id="world"></div>
+    </div>
+
     <div class="ghost">Doppio click sullo sfondo per creare un pop</div>
   </div>
 
+  <!-- BOX COMANDI DA TASTIERA -->
+  <div class="modalOverlay" id="kbdOverlay">
+    <div class="modal">
+      <h3>Comandi da tastiera</h3>
+      <p style="font-size:14px; line-height:1.4; margin:6px 0 10px;">
+        Doppio click = crea box • Trascina sfondo in modalità Pan = sposta vista • click linea = seleziona (per eliminare) •
+        doppio click linea = modifica • <kbd>CANC</kbd>/Elimina = elimina • <kbd>ESC</kbd> = annulla collega
+      </p>
+      <div class="actions">
+        <button class="btn tiny" id="btnKbdClose">Chiudi</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ✅ Nuovi controlli flottanti -->
+  <div id="controlsLeft">
+    <button class="btn" id="btnMove_f">Sposta</button>
+    <button class="btn" id="btnLink_f">Collega</button>
+  </div>
+
+  <div id="controlsRight">
+    <button class="btn tiny" id="btnZoomIn_f">+</button>
+    <button class="btn tiny" id="btnZoomOut_f">-</button>
+    <button class="btn tiny" id="btnPan_f" title="Pan vista">✋</button>
+  </div>
+
+</div>
+
 <script>
 (function () {
-  // ---------- elementi ----------
   var board = document.getElementById("board");
   var svg = document.getElementById("wires");
+  var viewport = document.getElementById("viewport");
   var world = document.getElementById("world");
   var statusEl = document.getElementById("status");
-      // --- DOM domanda focale ---
-  var focalTa = document.getElementById("focalQuestion");
+
+  var header = document.getElementById("mainHeader");
+  var headerHandle = document.getElementById("headerHandle");
+  var headerCollapsed = false;
+
+  headerHandle.addEventListener("click", function(e){
+    e.stopPropagation();
+    headerCollapsed = !headerCollapsed;
+    if (headerCollapsed) header.classList.add("collapsed");
+    else header.classList.remove("collapsed");
+  });
 
   var btnNew = document.getElementById("btnNew");
   var btnLink = document.getElementById("btnLink");
@@ -260,53 +430,341 @@
   var btnExportHtml = document.getElementById("btnExportHtml");
   var btnImport = document.getElementById("btnImport");
   var btnMove = document.getElementById("btnMove");
+  var btnPan = document.getElementById("btnPan");
+  var btnKeyboardHelp = document.getElementById("btnKeyboardHelp");
+  var kbdOverlay = document.getElementById("kbdOverlay");
+  var btnKbdClose = document.getElementById("btnKbdClose");
   var fileInput = document.getElementById("fileInput");
+  var btnZoomIn = document.getElementById("btnZoomIn");
+  var btnZoomOut = document.getElementById("btnZoomOut");
+
+  // ✅ bottoni flottanti in basso
+  var btnZoomIn_f  = document.getElementById("btnZoomIn_f");
+  var btnZoomOut_f = document.getElementById("btnZoomOut_f");
+  var btnPan_f     = document.getElementById("btnPan_f");
+
+  var btnMove_f    = document.getElementById("btnMove_f");
+  var btnLink_f    = document.getElementById("btnLink_f");
+
+  var txtColor = document.getElementById("txtColor");
+  var btnSizeSmall = document.getElementById("btnSizeSmall");
+  var btnSizeLarge = document.getElementById("btnSizeLarge");
+  var btnBold = document.getElementById("btnBold");
 
   function setStatus(msg){ statusEl.textContent = msg; }
   function uid(){ return Math.random().toString(36).slice(2, 10); }
   function boardRect(){ return board.getBoundingClientRect(); }
 
-  // ---------- stato ----------
-  var pops = [];   // {id,x,y,text}
-  var links = [];  // {id,from,to}
+  var pops = [];   // {id,x,y,text,color,size,bold,height}
+  var links = [];  // {id,from,to,end,shape,curveDir}
   var selectedBoxId = null;
   var selectedLinkId = null;
   var linkingFrom = null;
   var moveMode = false;
-    // --- domanda focale (testo) ---
-  var focalQuestion = "";
+  var panMode = false;
 
-  function askFocalQuestionAtStart(){
-    var q = prompt("Qual è la domanda focale a cui questa mappa prova a rispondere?", "");
-    if (q === null) q = "";            // se annulla, lasciamo vuoto
-    focalQuestion = (q || "").trim();
-    if (focalTa) focalTa.value = focalQuestion;
+  var view = { x: 0, y: 0, s: 1 };
+
+  function clampScale(s){
+    return Math.max(0.35, Math.min(2.8, s));
   }
 
-    // ---------- camera (pan/zoom) ----------
-  var camX = 0;
-  var camY = 0;
-  var camS = 1;
-
-  function applyCamera(){
-    world.style.transform = "translate(" + camX + "px," + camY + "px) scale(" + camS + ")";
+  function applyView(){
+    viewport.style.transform = "translate(" + view.x + "px," + view.y + "px) scale(" + view.s + ")";
   }
-  applyCamera();
 
   function screenToWorld(clientX, clientY){
-    var r = boardRect();
-    return {
-      x: (clientX - r.left - camX) / camS,
-      y: (clientY - r.top  - camY) / camS
+    var br = board.getBoundingClientRect();
+    var sx = clientX - br.left;
+    var sy = clientY - br.top;
+    return { x: (sx - view.x)/view.s, y: (sy - view.y)/view.s };
+  }
+
+  applyView();
+
+  var pointers = new Map();
+  var panState = null;
+  var pinchState = null;
+
+  function dist(a,b){
+    var dx=a.x-b.x, dy=a.y-b.y;
+    return Math.hypot(dx,dy);
+  }
+
+  board.addEventListener("pointerdown", function(e){
+    if (e.target.closest(".pop")) return;
+
+    board.setPointerCapture(e.pointerId);
+    pointers.set(e.pointerId, {x:e.clientX, y:e.clientY});
+
+    if (pointers.size === 1){
+      if (!panMode) {
+        panState = null;
+        return;
+      }
+      panState = { startX:view.x, startY:view.y, p0:{x:e.clientX,y:e.clientY} };
+      pinchState = null;
+    }
+
+    if (pointers.size === 2){
+      var arr = Array.from(pointers.values());
+      var pA = arr[0], pB = arr[1];
+      var mid = { x:(pA.x+pB.x)/2, y:(pA.y+pB.y)/2 };
+      var wMid = screenToWorld(mid.x, mid.y);
+
+      pinchState = {
+        startS: view.s,
+        startD: dist(pA,pB),
+        midScreen: mid,
+        midWorld: wMid
+      };
+      panState = null;
+    }
+  });
+
+  board.addEventListener("pointermove", function(e){
+    if (!pointers.has(e.pointerId)) return;
+    pointers.set(e.pointerId, {x:e.clientX, y:e.clientY});
+
+    if (pinchState && pointers.size >= 2){
+      var arr = Array.from(pointers.values());
+      var pA = arr[0], pB = arr[1];
+      var d = dist(pA,pB);
+      view.s = clampScale(pinchState.startS * (d / pinchState.startD));
+
+      var br = board.getBoundingClientRect();
+      var midSx = pinchState.midScreen.x - br.left;
+      var midSy = pinchState.midScreen.y - br.top;
+
+      view.x = midSx - pinchState.midWorld.x * view.s;
+      view.y = midSy - pinchState.midWorld.y * view.s;
+
+      applyView();
+      renderLinks();
+      return;
+    }
+
+    if (pointers.size === 1 && panState){
+      var dx = e.clientX - panState.p0.x;
+      var dy = e.clientY - panState.p0.y;
+      view.x = panState.startX + dx;
+      view.y = panState.startY + dy;
+      applyView();
+      renderLinks();
+    }
+  });
+
+  board.addEventListener("pointerup", function(e){
+    pointers.delete(e.pointerId);
+    if (pointers.size === 0){
+      panState = null;
+      pinchState = null;
+    }
+  });
+
+  board.addEventListener("pointercancel", function(){
+    pointers.clear();
+    panState = null;
+    pinchState = null;
+  });
+
+  board.addEventListener("wheel", function(e){
+    if (!e.ctrlKey) return;
+    e.preventDefault();
+
+    var before = screenToWorld(e.clientX, e.clientY);
+    var factor = (e.deltaY < 0) ? 1.08 : 0.92;
+    view.s = clampScale(view.s * factor);
+
+    var br = board.getBoundingClientRect();
+    var sx = e.clientX - br.left;
+    var sy = e.clientY - br.top;
+
+    view.x = sx - before.x * view.s;
+    view.y = sy - before.y * view.s;
+
+    applyView();
+    renderLinks();
+  }, { passive:false });
+
+
+  function zoomAroundCenter(factor){
+    var br = board.getBoundingClientRect();
+    var cx = br.left + br.width/2;
+    var cy = br.top + br.height/2;
+    var before = screenToWorld(cx, cy);
+
+    view.s = clampScale(view.s * factor);
+
+    var sx = cx - br.left;
+    var sy = cy - br.top;
+
+    view.x = sx - before.x * view.s;
+    view.y = sy - before.y * view.s;
+
+    applyView();
+    renderLinks();
+  }
+
+  var linkPreset = { end: "arrow", shape: "straight", curveDir: 1 };
+  var linkModal = null;
+
+  function ensureLinkModal() {
+    if (linkModal) return;
+
+    linkModal = document.createElement("div");
+    linkModal.className = "modalOverlay";
+    linkModal.innerHTML =
+      '<div class="modal" role="dialog" aria-modal="true">' +
+        '<h3>Opzioni collegamento</h3>' +
+        '<div class="row">' +
+          '<label><input type="radio" name="linkEnd" value="none"> Linea semplice</label>' +
+          '<label><input type="radio" name="linkEnd" value="arrow"> Freccia</label>' +
+        '</div>' +
+        '<div class="row">' +
+          '<label><input type="radio" name="linkShape" value="straight"> Retta</label>' +
+          '<label><input type="radio" name="linkShape" value="curve"> Curva</label>' +
+        '</div>' +
+        '<div class="row" data-curve-row>' +
+          '<label><input type="radio" name="curveDir" value="down"> Curva verso il basso</label>' +
+          '<label><input type="radio" name="curveDir" value="up"> Curva verso l\'alto</label>' +
+        '</div>' +
+        '<div class="actions">' +
+          '<button class="btn" id="linkOptCancel">Annulla</button>' +
+          '<button class="btn" id="linkOptOk">OK</button>' +
+        '</div>' +
+      '</div>';
+
+    document.body.appendChild(linkModal);
+
+    var shapeRadios = linkModal.querySelectorAll('input[name="linkShape"]');
+    var curveRadios = linkModal.querySelectorAll('input[name="curveDir"]');
+    var curveLabels = [];
+    curveRadios.forEach(function(r){
+      if (r.parentElement) curveLabels.push(r.parentElement);
+    });
+
+    function updateCurveRadiosDisabled() {
+      var shapeVal = (linkModal.querySelector('input[name="linkShape"]:checked') || {}).value;
+      var disabled = shapeVal !== 'curve';
+
+      curveRadios.forEach(function(r){
+        r.disabled = disabled;
+      });
+      curveLabels.forEach(function(lbl){
+        lbl.style.opacity = disabled ? 0.5 : 1;
+      });
+    }
+
+    shapeRadios.forEach(function(r){
+      r.addEventListener('change', updateCurveRadiosDisabled);
+    });
+
+    linkModal._updateCurveRadiosDisabled = updateCurveRadiosDisabled;
+  }
+
+  function openLinkOptions(done) {
+    ensureLinkModal();
+
+    var endRadio = linkModal.querySelector('input[name="linkEnd"][value="' + linkPreset.end + '"]');
+    var shapeRadio = linkModal.querySelector('input[name="linkShape"][value="' + linkPreset.shape + '"]');
+    if (endRadio) endRadio.checked = true;
+    if (shapeRadio) shapeRadio.checked = true;
+
+    var curveRadioVal = (linkPreset.curveDir === -1) ? "up" : "down";
+    var curveRadio = linkModal.querySelector('input[name="curveDir"][value="' + curveRadioVal + '"]');
+    if (curveRadio) curveRadio.checked = true;
+
+    if (typeof linkModal._updateCurveRadiosDisabled === "function") {
+      linkModal._updateCurveRadiosDisabled();
+    }
+
+    linkModal.style.display = "flex";
+
+    function close() {
+      linkModal.style.display = "none";
+      okBtn.onclick = null;
+      cancelBtn.onclick = null;
+      linkModal.onclick = null;
+    }
+
+    var okBtn = linkModal.querySelector("#linkOptOk");
+    var cancelBtn = linkModal.querySelector("#linkOptCancel");
+
+    okBtn.onclick = function () {
+      var endVal = (linkModal.querySelector('input[name="linkEnd"]:checked') || {}).value || "arrow";
+      var shapeVal = (linkModal.querySelector('input[name="linkShape"]:checked') || {}).value || "straight";
+
+      var curveDir = linkPreset.curveDir || 1;
+      if (shapeVal === "curve") {
+        var curveVal = (linkModal.querySelector('input[name="curveDir"]:checked') || {}).value || "down";
+        curveDir = (curveVal === "up") ? -1 : 1;
+      }
+
+      linkPreset = { end: endVal, shape: shapeVal, curveDir: curveDir };
+      close();
+      done(true);
+    };
+
+    cancelBtn.onclick = function () {
+      close();
+      done(false);
+    };
+
+    linkModal.onclick = function (e) {
+      if (e.target === linkModal) {
+        close();
+        done(false);
+      }
     };
   }
 
   function clampToBoard(x, y) {
-  // “spazio infinito”: non blocco a destra/in basso
-  if (x < 8) x = 8;
-  if (y < 8) y = 8;
-  return { x:x, y:y };
-}
+    if (x < 0) x = 0;
+    if (y < 0) y = 0;
+    return { x:x, y:y };
+  }
+
+  function disableTextControls() {
+    txtColor.disabled = true;
+    btnSizeSmall.disabled = true;
+    btnSizeLarge.disabled = true;
+    btnBold.disabled = true;
+
+    btnSizeSmall.classList.remove("active");
+    btnSizeLarge.classList.remove("active");
+    btnBold.classList.remove("active");
+  }
+
+  function enableTextControlsForPop(p) {
+    txtColor.disabled = false;
+    btnSizeSmall.disabled = false;
+    btnSizeLarge.disabled = false;
+    btnBold.disabled = false;
+
+    if (!p.color) p.color = "#000000";
+    if (!p.size) p.size = "small";
+    if (typeof p.bold === "undefined") p.bold = false;
+
+    txtColor.value = p.color;
+
+    btnSizeSmall.classList.toggle("active", p.size === "small");
+    btnSizeLarge.classList.toggle("active", p.size === "large");
+    btnBold.classList.toggle("active", !!p.bold);
+  }
+
+  function updateTextControls() {
+    if (!selectedBoxId) {
+      disableTextControls();
+      return;
+    }
+    var p = pops.find(function(pp){ return pp.id === selectedBoxId; });
+    if (!p) {
+      disableTextControls();
+      return;
+    }
+    enableTextControlsForPop(p);
+  }
 
   function clearSelections() {
     selectedBoxId = null;
@@ -315,6 +773,7 @@
     for (var i=0;i<a.length;i++) a[i].classList.remove("selected");
     var b = document.querySelectorAll(".linkLine");
     for (var j=0;j<b.length;j++) b[j].classList.remove("selected");
+    updateTextControls();
   }
 
   function selectBox(id) {
@@ -326,6 +785,7 @@
     }
     var b = document.querySelectorAll(".linkLine");
     for (var j=0;j<b.length;j++) b[j].classList.remove("selected");
+    updateTextControls();
   }
 
   function selectLink(id) {
@@ -337,19 +797,41 @@
     }
     var b = document.querySelectorAll(".pop");
     for (var j=0;j<b.length;j++) b[j].classList.remove("selected");
+    updateTextControls();
+  }
+
+  function setPanMode(on){
+    panMode = !!on;
+    if (panMode){
+      btnPan.classList.add("active");
+      setStatus("Modalità Pan: trascina lo sfondo per spostarti.");
+    } else {
+      btnPan.classList.remove("active");
+      setStatus("Pronto");
+    }
   }
 
   function setLinkMode(on) {
     if (on) {
       if (moveMode) setMoveMode(false);
+      if (panMode) setPanMode(false);
       if (!selectedBoxId) { setStatus("Seleziona un box prima di collegare."); return; }
-      linkingFrom = selectedBoxId;
-      btnLink.classList.add("active");
-      var a = document.querySelectorAll(".pop");
-      for (var i=0;i<a.length;i++) {
-        a[i].classList.toggle("linking", a[i].dataset.id === linkingFrom);
-      }
-      setStatus("Modalita collega: clicca un altro box.");
+
+      linkPreset = linkPreset || { end:"arrow", shape:"straight", curveDir:1 };
+
+      openLinkOptions(function (ok) {
+        if (!ok) { setStatus("Collegamento annullato."); return; }
+
+        linkingFrom = selectedBoxId;
+        btnLink.classList.add("active");
+        var a = document.querySelectorAll(".pop");
+        for (var i=0;i<a.length;i++) {
+          a[i].classList.toggle("linking", a[i].dataset.id === linkingFrom);
+        }
+        setStatus("Modalita collega: clicca un altro box.");
+      });
+
+      return;
     } else {
       linkingFrom = null;
       btnLink.classList.remove("active");
@@ -358,52 +840,111 @@
       setStatus("Pronto");
     }
   }
+      
   function setMoveMode(on) {
-  moveMode = !!on;
+    moveMode = !!on;
 
-  if (moveMode) {
-    // se attivo sposta: disattivo collega
-    setLinkMode(false);
-    btnMove.classList.add("active");
-    setStatus("Modalita sposta: trascina i box.");
-  } else {
-    btnMove.classList.remove("active");
-    setStatus("Pronto");
-  }
+    if (moveMode) {
+      setLinkMode(false);
+      setPanMode(false);
+      btnMove.classList.add("active");
+      setStatus("Modalita sposta: trascina i box.");
+    } else {
+      btnMove.classList.remove("active");
+      setStatus("Pronto");
+    }
 
-  // quando sposta è attivo, blocchiamo l'editing del testo
-  var tas = document.querySelectorAll(".pop .body");
-  for (var i = 0; i < tas.length; i++) {
-    tas[i].readOnly = moveMode;
+    var tas = document.querySelectorAll(".pop .body");
+    for (var i = 0; i < tas.length; i++) {
+      tas[i].readOnly = moveMode;
+    }
   }
-}
   
-  function autoGrow(ta) {
+  function autoGrow(ta, popModel) {
+    // reset per calcolare bene lo scrollHeight
     ta.style.height = "auto";
-    ta.style.height = ta.scrollHeight + "px";
+
+    // calcolo dell'altezza di UNA riga
+    var computed = window.getComputedStyle(ta);
+    var lineH = parseFloat(computed.lineHeight);
+    if (isNaN(lineH)) {
+      lineH = parseFloat(computed.fontSize) * 1.25 || 18; // fallback
+    }
+
+    var txt = ta.value || "";
+    var needed;
+
+    if (!txt.trim()) {
+      // POP vuoto
+      if (popModel && popModel.bigIntro) {
+        // solo il PRIMO pop può nascere a 4 righe
+        needed = lineH * 4;
+      } else {
+        // tutti gli altri (e il primo dopo l’uso) = una riga sola
+        needed = lineH;
+      }
+    } else {
+      // c'è testo → altezza minima che permette di leggere tutto
+      needed = ta.scrollHeight;
+      if (needed < lineH) needed = lineH;
+    }
+
+    if (popModel) {
+      popModel.height = needed;
+    }
+
+    ta.style.height = needed + "px";
+  }
+  
+  function resizeSelectedTextarea() {
+    if (!selectedBoxId) return;
+    var p = pops.find(function(pp){ return pp.id === selectedBoxId; });
+    if (!p) return;
+    var ta = document.querySelector('.pop[data-id="' + selectedBoxId + '"] .body');
+    if (ta) autoGrow(ta, p);
   }
 
   function createPop(x, y) {
-    var p = { id: uid(), x: x, y: y, text: "" };
+    // è il primo POP della mappa?
+    var isFirst = (pops.length === 0);
+
+    var p = {
+      id: uid(),
+      x: x,
+      y: y,
+      text: "",
+      color: "#000000",
+      size: "small",
+      bold: false,
+      height: 0,
+      bigIntro: isFirst   // solo il primo POP nasce più alto (autoGrow gestisce)
+    };
+
     pops.push(p);
     render();
+
+    // seleziona il nuovo box
     selectBox(p.id);
+
+    // messaggio di suggerimento
+    setStatus(
+      "Suggerimento: scrivi un concetto chiave senza articoli o aggettivi (es. SI: Napoleone — NO: il grande Napoleone)."
+    );
+
+    // porta subito il focus sulla textarea del nuovo POP
+    var el = document.querySelector('.pop[data-id="' + p.id + '"] .body');
+    if (el) el.focus();
   }
 
-  function addLink(from, to) {
-   if (!from || !to || from === to) return;
-
-   for (var i = 0; i < links.length; i++) {
-     if (links[i].from === from && links[i].to === to) return;
-   }
-
-   links.push({
-     id: uid(),
-     from: from,
-     to: to,
-     label: ""   // 👈 etichetta del connettore
-   });
-}
+  function addLink(from, to, preset) {
+    if (!from || !to || from === to) return;
+    for (var i=0;i<links.length;i++) {
+      if (links[i].from === from && links[i].to === to) return;
+    }
+    var p = preset || linkPreset || { end:"arrow", shape:"straight", curveDir:1 };
+    var curveDir = (typeof p.curveDir === "number") ? p.curveDir : 1;
+    links.push({ id: uid(), from: from, to: to, end: p.end, shape: p.shape, curveDir: curveDir });
+  }
 
   function deleteSelected() {
     if (selectedLinkId) {
@@ -426,19 +967,14 @@
     setStatus("Nessuna selezione.");
   }
 
-    function getPopBoxInBoardCoords(id) {
+  function getPopBoxInBoardCoords(id) {
     var el = document.querySelector('.pop[data-id="'+id+'"]');
     if (!el) return null;
 
-    var r = el.getBoundingClientRect();
-    var br = boardRect();
-
-    // convertiamo da coordinate schermo a coordinate world (prima della transform)
-    var x = (r.left - br.left - camX) / camS;
-    var y = (r.top  - br.top  - camY) / camS;
-
-    var w = r.width  / camS;
-    var h = r.height / camS;
+    var x = el.offsetLeft;
+    var y = el.offsetTop;
+    var w = el.offsetWidth;
+    var h = el.offsetHeight;
 
     return {
       cx: x + w/2, cy: y + h/2,
@@ -455,11 +991,9 @@
   }
 
   function renderLinks() {
-    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    while (svg.firstChild) svg.firstChild.remove();
 
     var NS = "http://www.w3.org/2000/svg";
-
-    // defs + freccia
     var defs = document.createElementNS(NS, "defs");
     var marker = document.createElementNS(NS, "marker");
     marker.setAttribute("id", "arrow");
@@ -489,118 +1023,84 @@
       var p1 = edgePoint(A.cx, A.cy, A.hw, A.hh, dx, dy);
       var p2 = edgePoint(B.cx, B.cy, B.hw, B.hh, -dx, -dy);
 
-      // linea
-      var line = document.createElementNS(NS, "line");
-      line.setAttribute("x1", p1.x);
-      line.setAttribute("y1", p1.y);
-      line.setAttribute("x2", p2.x);
-      line.setAttribute("y2", p2.y);
-      line.setAttribute("marker-end", "url(#arrow)");
-      line.classList.add("linkLine");
-      line.dataset.linkid = l.id;
+      var end = l.end || "arrow";
+      var shape = l.shape || "straight";
 
-      if (l.id === selectedLinkId) line.classList.add("selected");
+      var color = "#000000";
+      var toPop = pops.find(function(pp){ return pp.id === l.to; });
+      if (toPop && toPop.color) color = toPop.color;
 
-      line.addEventListener("mousedown", function (e) {
+      var elWire;
+
+      if (shape === "curve") {
+        var mx = (p1.x + p2.x) / 2;
+        var my = (p1.y + p2.y) / 2;
+
+        var len = Math.hypot(dx, dy) || 1;
+        var nx = -dy / len;
+        var ny =  dx / len;
+
+        var offset = Math.min(70, Math.max(20, len / 4));
+        var dir = (typeof l.curveDir === "number") ? l.curveDir : 1;
+        var cx = mx + nx * offset * dir;
+        var cy = my + ny * offset * dir;
+
+        elWire = document.createElementNS(NS, "path");
+        elWire.setAttribute("fill", "none");
+        elWire.setAttribute("d", "M " + p1.x + " " + p1.y + " Q " + cx + " " + cy + " " + p2.x + " " + p2.y);
+      } else {
+        elWire = document.createElementNS(NS, "line");
+        elWire.setAttribute("x1", p1.x);
+        elWire.setAttribute("y1", p1.y);
+        elWire.setAttribute("x2", p2.x);
+        elWire.setAttribute("y2", p2.y);
+      }
+
+      if (end === "arrow") {
+        elWire.setAttribute("marker-end", "url(#arrow)");
+      }
+
+      elWire.classList.add("linkLine");
+      elWire.dataset.linkid = l.id;
+      elWire.style.stroke = color;
+
+      if (l.id === selectedLinkId) elWire.classList.add("selected");
+
+      function handlePointerDown(e){
         e.stopPropagation();
         setLinkMode(false);
         selectLink(l.id);
-        setStatus("Link selezionato.");
-      });
-
-      svg.appendChild(line);
-
-            // ---------- ETICHETTA (solo testo, senza cornice) ----------
-      if (l.label && l.label.trim() !== "") {
-        var txt = document.createElementNS(NS, "text");
-
-        // centro della linea
-        var tx = (p1.x + p2.x) / 2;
-        var ty = (p1.y + p2.y) / 2;
-
-        // un pelo sopra la linea (così non si sovrappone)
-        ty = ty - 8;
-
-        txt.setAttribute("x", tx);
-        txt.setAttribute("y", ty);
-        txt.setAttribute("text-anchor", "middle");
-        txt.setAttribute("dominant-baseline", "middle");
-        txt.setAttribute("fill", "#000");
-        txt.setAttribute("font-size", "13");
-        txt.style.cursor = "pointer";
-        txt.style.pointerEvents = "auto";
-
-                     txt.textContent = l.label;
-        txt.dataset.linkid = l.id;
-
-        // blocca il PAN quando il puntatore parte dall'etichetta
-        txt.addEventListener("pointerdown", function (e) {
-          // importante: NON fare preventDefault, altrimenti non arrivano gli eventi mouse
-          e.stopPropagation();
-        });
-
-        // click (mousedown) sull'etichetta per modificarla
-        txt.addEventListener("mousedown", function (e) {
-          e.stopPropagation();
-
-          var id = this.dataset.linkid;
-
-          // esci comunque da collega e sposta
-          setLinkMode(false);
-          setMoveMode(false);
-
-          // feedback visivo
-          selectLink(id);
-
-          // modifica l'etichetta
-          for (var k = 0; k < links.length; k++) {
-            if (links[k].id === id) {
-              var nuovo = prompt("Etichetta del collegamento:", links[k].label || "");
-              if (nuovo !== null) links[k].label = nuovo;
-              break;
-            }
-          }
-
-          renderLinks();
-          clearSelections();
-          setStatus("Pronto");
-        });
-
-        // --- SFONDO dietro il testo (copre la linea sotto) ---
-        // 1) aggiungo temporaneamente il testo per misurarlo
-        svg.appendChild(txt);
-        var bb = txt.getBBox();
-
-        var padX = 6;
-        var padY = 3;
-
-        var bg = document.createElementNS(NS, "rect");
-        bg.setAttribute("x", bb.x - padX);
-        bg.setAttribute("y", bb.y - padY);
-        bg.setAttribute("width", bb.width + padX * 2);
-        bg.setAttribute("height", bb.height + padY * 2);
-        bg.setAttribute("rx", 4);
-        bg.setAttribute("ry", 4);
-
-        // stesso colore dello sfondo della tua app (nel CSS: --bg:#f6f7fb)
-        // colore di default (schermo)
-        var labelBg = "#f6f7fb";
-
-        // se siamo in stampa, usa bianco
-        if (window.matchMedia && window.matchMedia("print").matches) {
-        labelBg = "#ffffff";
-        }
-
-        bg.setAttribute("fill", labelBg);
-
-        bg.setAttribute("stroke", "none");
-        bg.style.pointerEvents = "none";
-
-        // 2) rimetto ordine: prima bg, poi txt
-        svg.removeChild(txt);
-        svg.appendChild(bg);
-        svg.appendChild(txt);
+        setStatus("Collegamento selezionato.");
       }
+
+      function handleDblClick(e){
+        e.stopPropagation();
+        setLinkMode(false);
+        selectLink(l.id);
+
+        linkPreset = {
+          end: l.end || "arrow",
+          shape: l.shape || "straight",
+          curveDir: (typeof l.curveDir === "number") ? l.curveDir : 1
+        };
+
+        openLinkOptions(function(ok){
+          if (!ok) {
+            setStatus("Modifica collegamento annullata.");
+            return;
+          }
+          l.end = linkPreset.end;
+          l.shape = linkPreset.shape;
+          l.curveDir = linkPreset.curveDir;
+          renderLinks();
+          setStatus("Collegamento aggiornato.");
+        });
+      }
+
+      elWire.addEventListener("pointerdown", handlePointerDown);
+      elWire.addEventListener("dblclick", handleDblClick);
+
+      svg.appendChild(elWire);
     });
   }
 
@@ -611,17 +1111,41 @@
     var ghost = board.querySelector(".ghost");
     if (ghost) ghost.style.display = pops.length ? "none" : "flex";
 
-    pops.forEach(function (p) {
+    pops.forEach(function (p, idx) {
+      if (!p.color) p.color = "#000000";
+      if (!p.size) p.size = "small";
+      if (typeof p.bold === "undefined") p.bold = false;
+
       var el = document.createElement("div");
       el.className = "pop";
       el.dataset.id = p.id;
       el.style.left = p.x + "px";
       el.style.top  = p.y + "px";
 
-      el.innerHTML = '<textarea class="body" spellcheck="false"></textarea>';
+      el.style.borderColor = p.color || "#000000";
+
+      // SOLO il primo POP ha il placeholder "argomento della mappa"
+      var placeholderAttr = "";
+      if (idx === 0) {
+        placeholderAttr = ' placeholder="Inserisci qui l&#39;argomento della mappa"';
+      }
+
+      el.innerHTML =
+        '<textarea class="body" spellcheck="false" rows="1" cols="6"' + placeholderAttr + '></textarea>';
+
       var ta = el.querySelector(".body");
       ta.value = p.text || "";
-      autoGrow(ta);
+
+      var fontSizePx = (p.size === "large") ? "20px" : "14px";
+      ta.style.fontSize = fontSizePx;
+      ta.style.fontWeight = p.bold ? "700" : "400";
+      ta.style.color = p.color || "#000000";
+
+      if (typeof p.height === "number" && p.height > 0) {
+        ta.style.height = p.height + "px";
+      } else {
+        autoGrow(ta, p);
+      }
 
       if (p.id === selectedBoxId) el.classList.add("selected");
       if (p.id === linkingFrom) el.classList.add("linking");
@@ -634,80 +1158,67 @@
 
       ta.addEventListener("input", function (e) {
         p.text = e.target.value;
-        autoGrow(ta);
+        autoGrow(ta, p);
         renderLinks();
       });
 
-      // click ovunque nel box: se in modalita collega, crea link
       el.addEventListener("click", function () {
         if (linkingFrom && linkingFrom !== p.id) {
-         addLink(linkingFrom, p.id);
-
-         // chiedi subito l'etichetta
-         var last = links[links.length - 1];
-         var t = prompt("Etichetta del collegamento:", "");
-         if (t !== null) last.label = t;
-
-         setLinkMode(false);
-         renderLinks();
-         setStatus("Collegamento creato.");
-
+          addLink(linkingFrom, p.id, linkPreset);
+          setLinkMode(false);
+          renderLinks();
+          setStatus("Collegamento creato.");
         }
       });
 
-      // drag solo fuori textarea
       var dragging = false, sx=0, sy=0, ox=0, oy=0;
 
       el.addEventListener("pointerdown", function (e) {
-      // Su touch spesso e.button non è 0: quindi non blocchiamo
-         if (e.pointerType === "mouse" && e.button !== 0) return;
+        if (e.pointerType === "mouse" && e.button !== 0) return;
+        if (!moveMode && e.target && e.target.tagName && e.target.tagName.toLowerCase() === "textarea") return;
 
-       // Se NON siamo in modalita sposta e sto toccando la textarea, non trascinare
-         if (!moveMode && e.target && e.target.tagName && e.target.tagName.toLowerCase() === "textarea") return;
+        e.preventDefault();
+        e.stopPropagation();
 
-         e.preventDefault();     // evita scroll/zoom mentre trascini
-         e.stopPropagation();
+        setLinkMode(false);
+        selectBox(p.id);
 
-         setLinkMode(false);
-         selectBox(p.id);
+        dragging = true;
+        sx = e.clientX; sy = e.clientY;
+        ox = p.x; oy = p.y;
 
-         dragging = true;
-         sx = e.clientX; sy = e.clientY;
-         ox = p.x; oy = p.y;
+        if (el.setPointerCapture) el.setPointerCapture(e.pointerId);
 
-         // cattura il puntatore: fondamentale su mobile
-         if (el.setPointerCapture) el.setPointerCapture(e.pointerId);
+        function onMove(ev) {
+          if (!dragging) return;
+          var dx = (ev.clientX - sx) / view.s;
+          var dy = (ev.clientY - sy) / view.s;
+          var pos = clampToBoard(ox + dx, oy + dy);
+          p.x = pos.x; p.y = pos.y;
+          el.style.left = p.x + "px";
+          el.style.top  = p.y + "px";
+          renderLinks();
+        }
 
-         function onMove(ev) {
-           if (!dragging) return;
-           var dx = (ev.clientX - sx) / camS;
-           var dy = (ev.clientY - sy) / camS;
-           var pos = clampToBoard(ox + dx, oy + dy);
-           p.x = pos.x; p.y = pos.y;
-           el.style.left = p.x + "px";
-           el.style.top  = p.y + "px";
-           renderLinks();
-         }
+        function onUp(ev) {
+          dragging = false;
+          window.removeEventListener("pointermove", onMove);
+          window.removeEventListener("pointerup", onUp);
+        }
 
-         function onUp(ev) {
-           dragging = false;
-           window.removeEventListener("pointermove", onMove);
-           window.removeEventListener("pointerup", onUp);
-         }
+        window.addEventListener("pointermove", onMove, { passive:false });
+        window.addEventListener("pointerup", onUp, { passive:true });
+      });
 
-          window.addEventListener("pointermove", onMove, { passive:false });
-          window.addEventListener("pointerup", onUp, { passive:true });
-});
-
-            world.appendChild(el);
+      world.appendChild(el);
     });
 
     renderLinks();
+    updateTextControls();
   }
 
-  // ---------- export/import/pdf ----------
   function getState() {
-    return { version: 1, createdAt: new Date().toISOString(), pops: pops, links: links };
+    return { version: 3, createdAt: new Date().toISOString(), pops: pops, links: links };
   }
 
   function downloadBlob(name, blob) {
@@ -728,57 +1239,196 @@
     setStatus("Esportato JSON.");
   }
 
-function exportHTML() {
-  var state = JSON.stringify(getState(), null, 2);
+  function exportHTML() {
+    var state = JSON.stringify(getState(), null, 2);
 
-  var html =
-    '<!doctype html>' +
-    '<html lang="it">' +
-    '<head>' +
-    '<meta charset="utf-8"/>' +
-    '<meta name="viewport" content="width=device-width, initial-scale=1"/>' +
-    '<title>Mappa esportata</title>' +
-    '</head>' +
-    '<body>' +
-    '<h3>Mappa esportata</h3>' +
-    '<p>Importa questo file nell\'app con il pulsante Importa.</p>' +
-    '<textarea id="popplet_export_data" style="display:none;">' +
-    state +
-    '</textarea>' +
-    '</body>' +
-    '</html>';
+    var html =
+      '<!doctype html>' +
+      '<html lang="it">' +
+      '<head>' +
+      '<meta charset="utf-8"/>' +
+      '<meta name="viewport" content="width=device-width, initial-scale=1"/>' +
+      '<title>Mappa esportata</title>' +
+      '</head>' +
+      '<body>' +
+      '<h3>Mappa esportata</h3>' +
+      '<p>Importa questo file nell\'app con il pulsante Importa.</p>' +
+      '<textarea id="popplet_export_data" style="display:none;">' +
+      state +
+      '</textarea>' +
+      '</body>' +
+      '</html>';
 
-  var blob = new Blob([html], { type: "text/html;charset=utf-8" });
-  var name = "mappa_" + new Date().toISOString().slice(0,19).replace(/:/g,'-') + ".html";
-  downloadBlob(name, blob);
-  setStatus("Esportato HTML.");
-}
-  
-function parseImportedText(text) {
-  var t = (text || "").trim();
-
-  // Caso 1: JSON puro
-  if (t.charAt(0) === "{" || t.charAt(0) === "[") {
-    return JSON.parse(t);
+    var blob = new Blob([html], { type: "text/html;charset=utf-8" });
+    var name = "mappa_" + new Date().toISOString().slice(0,19).replace(/:/g,'-') + ".html";
+    downloadBlob(name, blob);
+    setStatus("Esportato HTML.");
   }
+  
+  function parseImportedText(text) {
+    var t = (text || "").trim();
 
-  // Caso 2: HTML esportato (textarea nascosta)
-  var re = /<textarea[^>]*id=["']popplet_export_data["'][^>]*>([\s\S]*?)<\/textarea>/i;
-  var m = text.match(re);
-  if (!m) throw new Error("File non riconosciuto");
+    if (t.charAt(0) === "{" || t.charAt(0) === "[") {
+      return JSON.parse(t);
+    }
 
-  return JSON.parse(m[1]);
-}
+    var re = /<textarea[^>]*id=["']popplet_export_data["'][^>]*>([\s\S]*?)<\/textarea>/i;
+    var m = text.match(re);
+    if (!m) throw new Error("File non riconosciuto");
+
+    return JSON.parse(m[1]);
+  }
 
   function applyState(state) {
     if (!state || !state.pops || !state.links) throw new Error("Dati incompleti");
+
     pops = state.pops;
     links = state.links;
+
     clearSelections();
     setLinkMode(false);
     render();
     setStatus("Import OK.");
   }
+
+  function exportPDF() {
+    setStatus("Stampa: scegli Salva come PDF.");
+    window.print();
+  }
+
+  board.addEventListener("mousedown", function (e) {
+    if (e.target === board) {
+      clearSelections();
+      setLinkMode(false);
+      setStatus("Pronto");
+    }
+  });
+
+  board.addEventListener("dblclick", function (e) {
+    if (e.target && e.target.closest && e.target.closest(".pop")) return;
+    var p = screenToWorld(e.clientX, e.clientY);
+    var pos = clampToBoard(p.x, p.y);
+    createPop(pos.x, pos.y);
+  });
+
+  window.addEventListener("keydown", function (e) {
+    var key = (e.key || "").toLowerCase();
+    if (key === "delete" || key === "backspace") {
+      var active = document.activeElement;
+      var inEditor = active && active.tagName === "TEXTAREA";
+      if (!inEditor) { e.preventDefault(); deleteSelected(); }
+    }
+    if (key === "escape") setLinkMode(false);
+  });
+
+  btnNew.addEventListener("click", function () {
+    var r = boardRect();
+    createPop(20 + Math.random()*(r.width-260), 20 + Math.random()*(r.height-160));
+  });
+  btnLink.addEventListener("click", function () { setLinkMode(!linkingFrom); });
+  btnDelete.addEventListener("click", deleteSelected);
+  btnMove.addEventListener("click", function () { setMoveMode(!moveMode); });
+
+  btnPan.addEventListener("click", function () {
+    var newOn = !panMode;
+    if (newOn) {
+      setMoveMode(false);
+      setLinkMode(false);
+    }
+    setPanMode(newOn);
+  });
+
+  btnPdf.addEventListener("click", exportPDF);
+  btnExportJson.addEventListener("click", exportJSON);
+  btnExportHtml.addEventListener("click", exportHTML);
+  btnImport.addEventListener("click", doImport);
+  btnZoomIn.addEventListener("click", function(){ zoomAroundCenter(1.15); });
+  btnZoomOut.addEventListener("click", function(){ zoomAroundCenter(1/1.15); });
+
+  // ✅ Collego i pulsanti flottanti alle stesse azioni dei bottoni originali
+  if (btnZoomIn_f) {
+    btnZoomIn_f.addEventListener("click", function(){
+      btnZoomIn.click();
+    });
+  }
+
+  if (btnZoomOut_f) {
+    btnZoomOut_f.addEventListener("click", function(){
+      btnZoomOut.click();
+    });
+  }
+
+  if (btnPan_f) {
+    btnPan_f.addEventListener("click", function(){
+      btnPan.click();
+    });
+  }
+
+  if (btnMove_f) {
+    btnMove_f.addEventListener("click", function(){
+      btnMove.click();
+    });
+  }
+
+  if (btnLink_f) {
+    btnLink_f.addEventListener("click", function(){
+      btnLink.click();
+    });
+  }
+
+  txtColor.addEventListener("input", function(){
+    if (!selectedBoxId) return;
+    var p = pops.find(function(pp){ return pp.id === selectedBoxId; });
+    if (!p) return;
+    p.color = txtColor.value || "#000000";
+
+    var ta = document.querySelector('.pop[data-id="'+p.id+'"] .body');
+    if (ta) ta.style.color = p.color;
+
+    var boxEl = document.querySelector('.pop[data-id="'+p.id+'"]');
+    if (boxEl) boxEl.style.borderColor = p.color;
+
+    renderLinks();
+  });
+
+  btnSizeSmall.addEventListener("click", function(){
+    if (!selectedBoxId) return;
+    var p = pops.find(function(pp){ return pp.id === selectedBoxId; });
+    if (!p) return;
+    p.size = "small";
+    var ta = document.querySelector('.pop[data-id="'+p.id+'"] .body');
+    if (ta) {
+      ta.style.fontSize = "14px";
+      autoGrow(ta, p);
+    }
+    updateTextControls();
+  });
+
+  btnSizeLarge.addEventListener("click", function(){
+    if (!selectedBoxId) return;
+    var p = pops.find(function(pp){ return pp.id === selectedBoxId; });
+    if (!p) return;
+    p.size = "large";
+    var ta = document.querySelector('.pop[data-id="'+p.id+'"] .body');
+    if (ta) {
+      ta.style.fontSize = "20px";
+      autoGrow(ta, p);
+    }
+    updateTextControls();
+  });
+
+  btnBold.addEventListener("click", function(){
+    if (!selectedBoxId) return;
+    var p = pops.find(function(pp){ return pp.id === selectedBoxId; });
+    if (!p) return;
+    p.bold = !p.bold;
+    var ta = document.querySelector('.pop[data-id="'+p.id+'"] .body');
+    if (ta) {
+      ta.style.fontWeight = p.bold ? "700" : "400";
+      autoGrow(ta, p);
+    }
+    updateTextControls();
+  });
 
   function doImport() {
     fileInput.value = "";
@@ -798,155 +1448,20 @@ function parseImportedText(text) {
     });
   });
 
-  function exportPDF() {
-    setStatus("Stampa: scegli Salva come PDF.");
-    window.print();
-  }
-
-  // ---------- eventi ----------
-  // ---------- PAN + PINCH ZOOM (mobile) ----------
-  var pointers = new Map();
-  var pinchStartDist = 0;
-  var pinchStartS = 1;
-  var pinchStartMid = null;
-  var panStart = null;
-
-  function dist(a,b){
-    var dx = a.x - b.x, dy = a.y - b.y;
-    return Math.sqrt(dx*dx + dy*dy);
-  }
-  function mid(a,b){
-    return { x:(a.x+b.x)/2, y:(a.y+b.y)/2 };
-  }
-
-  board.addEventListener("pointerdown", function(e){
-    // solo sfondo: NON box e NON elementi SVG (frecce / etichette)
-   if (e.target && e.target.closest && (e.target.closest(".pop") || e.target.closest("svg"))) return;
-
-    pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
-    board.setPointerCapture(e.pointerId);
-
-    if (pointers.size === 1) {
-      panStart = { x:e.clientX, y:e.clientY, camX:camX, camY:camY };
-    } else if (pointers.size === 2) {
-      var arr = Array.from(pointers.values());
-      pinchStartDist = dist(arr[0], arr[1]);
-      pinchStartS = camS;
-      pinchStartMid = mid(arr[0], arr[1]);
-    }
-  }, { passive:false });
-
-  board.addEventListener("pointermove", function(e){
-    if (!pointers.has(e.pointerId)) return;
-    pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
-
-    if (pointers.size === 1 && panStart) {
-      var p = Array.from(pointers.values())[0];
-      camX = panStart.camX + (p.x - panStart.x);
-      camY = panStart.camY + (p.y - panStart.y);
-      applyCamera();
-      renderLinks();
-    }
-
-    if (pointers.size === 2) {
-      var arr = Array.from(pointers.values());
-      var d = dist(arr[0], arr[1]);
-      if (!pinchStartDist) return;
-
-      var newS = pinchStartS * (d / pinchStartDist);
-      if (newS < 0.25) newS = 0.25;
-      if (newS > 4.0) newS = 4.0;
-
-      // mantieni il punto medio sotto le dita
-      var m = mid(arr[0], arr[1]);
-
-      // coord mondo del mid prima del cambio scala
-      var w0 = screenToWorld(pinchStartMid.x, pinchStartMid.y);
-
-      camS = newS;
-
-      var r = boardRect();
-      camX = m.x - r.left - (w0.x * camS);
-      camY = m.y - r.top  - (w0.y * camS);
-
-      applyCamera();
-      renderLinks();
-    }
-  }, { passive:false });
-
-  board.addEventListener("pointerup", function(e){
-    pointers.delete(e.pointerId);
-    if (pointers.size < 2) pinchStartDist = 0;
-    if (pointers.size === 0) panStart = null;
-  }, { passive:true });
-
-  board.addEventListener("pointercancel", function(e){
-    pointers.delete(e.pointerId);
-    if (pointers.size < 2) pinchStartDist = 0;
-    if (pointers.size === 0) panStart = null;
-  }, { passive:true });
-
-  board.addEventListener("mousedown", function (e) {
-    if (e.target === board) {
-      clearSelections();
-      setLinkMode(false);
-      setStatus("Pronto");
+  /* Apertura/chiusura box "Comandi da tastiera" */
+  btnKeyboardHelp.addEventListener("click", function(){
+    kbdOverlay.style.display = "flex";
+  });
+  btnKbdClose.addEventListener("click", function(){
+    kbdOverlay.style.display = "none";
+  });
+  kbdOverlay.addEventListener("click", function(e){
+    if (e.target === kbdOverlay) {
+      kbdOverlay.style.display = "none";
     }
   });
 
-  board.addEventListener("dblclick", function (e) {
-    if (e.target && e.target.closest && e.target.closest(".pop")) return;
-    var w = screenToWorld(e.clientX, e.clientY);
-    var pos = clampToBoard(w.x, w.y);
-    createPop(pos.x, pos.y);
-  });
-
-  window.addEventListener("keydown", function (e) {
-    var key = (e.key || "").toLowerCase();
-    if (key === "delete" || key === "backspace") {
-      var active = document.activeElement;
-      var inEditor = active && active.tagName === "TEXTAREA";
-      if (!inEditor) { e.preventDefault(); deleteSelected(); }
-    }
-    if (key === "l") { linkingFrom ? setLinkMode(false) : setLinkMode(true); }
-    if (key === "escape") setLinkMode(false);
-  });
-
-  // ---------- bottoni ----------
-  btnNew.addEventListener("click", function () {
-  var r = boardRect();
-  var cx = r.left + r.width/2;
-  var cy = r.top  + r.height/2;
-  var w = screenToWorld(cx, cy);
-  createPop(w.x, w.y);
-});
-  
-  btnLink.addEventListener("click", function () { setLinkMode(!linkingFrom); });
-  btnDelete.addEventListener("click", deleteSelected);
-  btnMove.addEventListener("click", function () { setMoveMode(!moveMode); });
-
-  btnPdf.addEventListener("click", exportPDF);
-  btnExportJson.addEventListener("click", exportJSON);
-  btnExportHtml.addEventListener("click", exportHTML);
-  btnImport.addEventListener("click", doImport);
-
-  // ---------- init ----------
-  askFocalQuestionAtStart();
-  if (focalTa) {
-  focalTa.addEventListener("input", function () {
-    if (this.value.trim() === "") {
-      this.setAttribute("data-empty", "1");
-    } else {
-      this.removeAttribute("data-empty");
-    }
-  });
-}
   render();
-    if (focalTa) {
-    focalTa.addEventListener("input", function(){
-      focalQuestion = this.value;
-    });
-  }
   setStatus("Pronto");
 })();
 </script>
