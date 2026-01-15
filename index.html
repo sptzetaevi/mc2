@@ -27,12 +27,26 @@
       align-items:center;
       padding:10px 12px;
     }
+
+    /* Maniglia-cassetto ingrandita con frecce */
     .headerHandle{
       width:100%;
-      height:8px;
-      background:rgba(0,0,0,.20);
+      height:20px;                       /* più alta */
+      background:rgba(0,0,0,.18);        /* un po' più visibile */
       cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      position:relative;
     }
+    .headerHandle::before{
+      content:"▲ ▼";                     /* frecce su/giù */
+      font-size:11px;
+      letter-spacing:3px;
+      color:#f5f5f5;
+      opacity:0.9;
+    }
+
     header.collapsed .headerInner{
       display:none;
     }
@@ -124,32 +138,24 @@
 
     .pop{
       position:absolute;
-
-      /* 👉 niente width fissa */
-      min-width:20ch;      /* allarga a ~20 caratteri */
-      max-width:32ch;      /* limite massimo */
-
+      min-width:20ch;
+      max-width:32ch;
       background:#fff;
       border:1px solid rgba(0,0,0,.55);
       border-radius:14px;
       box-shadow:0 8px 24px rgba(0,0,0,.10);
-      padding:6px;            /* leggermente più contenuto anche il padding orizzontale */
+      padding:6px;
       box-sizing:border-box;
       user-select:none;
       cursor:grab;
-
-      /* 👉 inline-flex = il box si adatta alla larghezza del contenuto,
-         invece di occupare più spazio del necessario */
       display:inline-flex;
       align-items:center;
       justify-content:center;
-
       touch-action:none;
       pointer-events:auto;
     }
 
     .pop:focus-within{
-      /* quando il textarea interno è in focus, il box si allarga a 20 "battute" */
       min-width:20ch;
     }
 
@@ -158,11 +164,8 @@
     .pop.linking{ background:rgba(0,120,255,.08)!important; border-color:rgba(0,120,255,.35)!important; }
 
     .body{
-      /* 👉 lascia decidere alla textarea quanto essere larga,
-         senza forzarla a riempire il box */
-      width:100%;       /* prende tutta la larghezza del POP */
-      max-width:none;   /* nessun limite interno */
-
+      width:100%;
+      max-width:none;
       border:0;
       outline:0;
       resize:none;
@@ -180,7 +183,6 @@
       text-align:center;
     }
 
-    /* stile del placeholder dentro il POP */
     .body::placeholder{
       color:rgba(0,0,0,.45);
       font-size:12px;
@@ -205,7 +207,7 @@
       font-size:14px; opacity:.55;
     }
 
-    /* ✅ Controlli flottanti in basso a destra/sinistra */
+    /* Controlli flottanti in basso a destra/sinistra */
     #controlsRight {
       position: fixed;
       bottom: 20px;
@@ -229,6 +231,28 @@
     #controlsRight .btn,
     #controlsLeft .btn {
       pointer-events: auto;
+    }
+
+    /* Ingrandisco i pulsanti flottanti +, - e ✋ */
+    #controlsRight .btn.tiny {
+      padding: 8px 12px;
+      font-size: 15px;
+      border-radius: 12px;
+      min-width: 40px;
+    }
+
+    /* Pan flottante ben visibile quando attivo */
+    #btnPan_f.active {
+      background: rgba(0,120,255,.12);
+      border-color: rgba(0,120,255,.8);
+      box-shadow: 0 0 0 3px rgba(0,120,255,.25);
+    }
+
+    /* Sposta flottante ben visibile quando attivo */
+    #btnMove_f.active {
+      background: rgba(0,120,255,.12);
+      border-color: rgba(0,120,255,.8);
+      box-shadow: 0 0 0 3px rgba(0,120,255,.25);
     }
 
     /* Nascondo i bottoni originali nel header,
@@ -389,7 +413,7 @@
     </div>
   </div>
 
-  <!-- ✅ Nuovi controlli flottanti -->
+  <!-- Nuovi controlli flottanti -->
   <div id="controlsLeft">
     <button class="btn" id="btnMove_f">Sposta</button>
     <button class="btn" id="btnLink_f">Collega</button>
@@ -438,7 +462,7 @@
   var btnZoomIn = document.getElementById("btnZoomIn");
   var btnZoomOut = document.getElementById("btnZoomOut");
 
-  // ✅ bottoni flottanti in basso
+  // bottoni flottanti in basso
   var btnZoomIn_f  = document.getElementById("btnZoomIn_f");
   var btnZoomOut_f = document.getElementById("btnZoomOut_f");
   var btnPan_f     = document.getElementById("btnPan_f");
@@ -804,9 +828,11 @@
     panMode = !!on;
     if (panMode){
       btnPan.classList.add("active");
+      if (btnPan_f) btnPan_f.classList.add("active");
       setStatus("Modalità Pan: trascina lo sfondo per spostarti.");
     } else {
       btnPan.classList.remove("active");
+      if (btnPan_f) btnPan_f.classList.remove("active");
       setStatus("Pronto");
     }
   }
@@ -848,9 +874,11 @@
       setLinkMode(false);
       setPanMode(false);
       btnMove.classList.add("active");
+      if (btnMove_f) btnMove_f.classList.add("active");
       setStatus("Modalita sposta: trascina i box.");
     } else {
       btnMove.classList.remove("active");
+      if (btnMove_f) btnMove_f.classList.remove("active");
       setStatus("Pronto");
     }
 
@@ -861,30 +889,24 @@
   }
   
   function autoGrow(ta, popModel) {
-    // reset per calcolare bene lo scrollHeight
     ta.style.height = "auto";
 
-    // calcolo dell'altezza di UNA riga
     var computed = window.getComputedStyle(ta);
     var lineH = parseFloat(computed.lineHeight);
     if (isNaN(lineH)) {
-      lineH = parseFloat(computed.fontSize) * 1.25 || 18; // fallback
+      lineH = parseFloat(computed.fontSize) * 1.25 || 18;
     }
 
     var txt = ta.value || "";
     var needed;
 
     if (!txt.trim()) {
-      // POP vuoto
       if (popModel && popModel.bigIntro) {
-        // solo il PRIMO pop può nascere a 4 righe
         needed = lineH * 4;
       } else {
-        // tutti gli altri (e il primo dopo l’uso) = una riga sola
         needed = lineH;
       }
     } else {
-      // c'è testo → altezza minima che permette di leggere tutto
       needed = ta.scrollHeight;
       if (needed < lineH) needed = lineH;
     }
@@ -905,7 +927,6 @@
   }
 
   function createPop(x, y) {
-    // è il primo POP della mappa?
     var isFirst = (pops.length === 0);
 
     var p = {
@@ -917,21 +938,18 @@
       size: "small",
       bold: false,
       height: 0,
-      bigIntro: isFirst   // solo il primo POP nasce più alto (autoGrow gestisce)
+      bigIntro: isFirst
     };
 
     pops.push(p);
     render();
 
-    // seleziona il nuovo box
     selectBox(p.id);
 
-    // messaggio di suggerimento
     setStatus(
       "Suggerimento: scrivi un concetto chiave senza articoli o aggettivi (es. SI: Napoleone — NO: il grande Napoleone)."
     );
 
-    // porta subito il focus sulla textarea del nuovo POP
     var el = document.querySelector('.pop[data-id="' + p.id + '"] .body');
     if (el) el.focus();
   }
@@ -1124,7 +1142,6 @@
 
       el.style.borderColor = p.color || "#000000";
 
-      // SOLO il primo POP ha il placeholder "argomento della mappa"
       var placeholderAttr = "";
       if (idx === 0) {
         placeholderAttr = ' placeholder="Inserisci qui l&#39;argomento della mappa"';
@@ -1345,7 +1362,7 @@
   btnZoomIn.addEventListener("click", function(){ zoomAroundCenter(1.15); });
   btnZoomOut.addEventListener("click", function(){ zoomAroundCenter(1/1.15); });
 
-  // ✅ Collego i pulsanti flottanti alle stesse azioni dei bottoni originali
+  // Collego i pulsanti flottanti alle stesse azioni dei bottoni originali
   if (btnZoomIn_f) {
     btnZoomIn_f.addEventListener("click", function(){
       btnZoomIn.click();
@@ -1448,7 +1465,6 @@
     });
   });
 
-  /* Apertura/chiusura box "Comandi da tastiera" */
   btnKeyboardHelp.addEventListener("click", function(){
     kbdOverlay.style.display = "flex";
   });
