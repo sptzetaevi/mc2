@@ -104,7 +104,8 @@
     }
 
     #board{
-      position:relative; overflow:hidden;
+      position:relative;
+      overflow:hidden;
       touch-action: none;
       background:
         linear-gradient(var(--bg), var(--bg)),
@@ -207,52 +208,52 @@
       font-size:14px; opacity:.55;
     }
 
-    /* Controlli flottanti in basso a destra/sinistra */
+    /* Controlli flottanti agganciati all'area dei POP (in alto) */
     #controlsRight {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      z-index: 999;
+      position:absolute;
+      top:10px;
+      right:20px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      z-index:20;
     }
 
     #controlsLeft {
-      position: fixed;
-      bottom: 20px;
-      left: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      z-index: 999;
+      position:absolute;
+      top:10px;
+      left:20px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      z-index:20;
     }
 
     #controlsRight .btn,
     #controlsLeft .btn {
-      pointer-events: auto;
+      pointer-events:auto;
     }
 
     /* Ingrandisco i pulsanti flottanti +, - e ✋ */
     #controlsRight .btn.tiny {
-      padding: 8px 12px;
-      font-size: 15px;
-      border-radius: 12px;
-      min-width: 40px;
+      padding:8px 12px;
+      font-size:15px;
+      border-radius:12px;
+      min-width:40px;
     }
 
     /* Pan flottante ben visibile quando attivo */
     #btnPan_f.active {
-      background: rgba(0,120,255,.12);
-      border-color: rgba(0,120,255,.8);
-      box-shadow: 0 0 0 3px rgba(0,120,255,.25);
+      background:rgba(0,120,255,.12);
+      border-color:rgba(0,120,255,.8);
+      box-shadow:0 0 0 3px rgba(0,120,255,.25);
     }
 
     /* Sposta flottante ben visibile quando attivo */
     #btnMove_f.active {
-      background: rgba(0,120,255,.12);
-      border-color: rgba(0,120,255,.8);
-      box-shadow: 0 0 0 3px rgba(0,120,255,.25);
+      background:rgba(0,120,255,.12);
+      border-color:rgba(0,120,255,.8);
+      box-shadow:0 0 0 3px rgba(0,120,255,.25);
     }
 
     /* Nascondo i bottoni originali nel header,
@@ -262,7 +263,7 @@
     #btnPan,
     #btnMove,
     #btnLink {
-      display: none !important;
+      display:none !important;
     }
 
     @media print {
@@ -289,37 +290,37 @@
     }
 
     #mapTitle {
-      font-size: 22px;
-      font-weight: 800;
-      letter-spacing: 2px;
-      user-select: none;
+      font-size:22px;
+      font-weight:800;
+      letter-spacing:2px;
+      user-select:none;
       margin-left:auto;
     }
 
     .homeLogo{
-      margin-left: 10px;
-      text-decoration: none;
+      margin-left:10px;
+      text-decoration:none;
     }
     .homeLogo .logoLetters{
-      width: 40px;
-      height: 40px;
-      border-radius: 999px;
-      border: 2px solid rgba(0,0,0,.25);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      font-size: 14px;
-      letter-spacing: 2px;
-      color: var(--ink);
-      background: #fff;
-      box-shadow: 0 2px 6px rgba(0,0,0,.12);
-      transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+      width:40px;
+      height:40px;
+      border-radius:999px;
+      border:2px solid rgba(0,0,0,.25);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:700;
+      font-size:14px;
+      letter-spacing:2px;
+      color:var(--ink);
+      background:#fff;
+      box-shadow:0 2px 6px rgba(0,0,0,.12);
+      transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease;
     }
     .homeLogo:hover .logoLetters{
-      transform: translateY(-1px);
-      box-shadow: 0 4px 10px rgba(0,0,0,.16);
-      border-color: rgba(0,120,255,.6);
+      transform:translateY(-1px);
+      box-shadow:0 4px 10px rgba(0,0,0,.16);
+      border-color:rgba(0,120,255,.6);
     }
 
     /* POPUP generici */
@@ -397,6 +398,18 @@
     </div>
 
     <div class="ghost">Doppio click sullo sfondo per creare un pop</div>
+
+    <!-- Controlli flottanti POSIZIONATI dentro l'area dei POP -->
+    <div id="controlsLeft">
+      <button class="btn" id="btnMove_f">Sposta</button>
+      <button class="btn" id="btnLink_f">Collega</button>
+    </div>
+
+    <div id="controlsRight">
+      <button class="btn tiny" id="btnZoomIn_f">+</button>
+      <button class="btn tiny" id="btnZoomOut_f">-</button>
+      <button class="btn tiny" id="btnPan_f" title="Pan vista">✋</button>
+    </div>
   </div>
 
   <!-- BOX COMANDI DA TASTIERA -->
@@ -411,18 +424,6 @@
         <button class="btn tiny" id="btnKbdClose">Chiudi</button>
       </div>
     </div>
-  </div>
-
-  <!-- Nuovi controlli flottanti -->
-  <div id="controlsLeft">
-    <button class="btn" id="btnMove_f">Sposta</button>
-    <button class="btn" id="btnLink_f">Collega</button>
-  </div>
-
-  <div id="controlsRight">
-    <button class="btn tiny" id="btnZoomIn_f">+</button>
-    <button class="btn tiny" id="btnZoomOut_f">-</button>
-    <button class="btn tiny" id="btnPan_f" title="Pan vista">✋</button>
   </div>
 
 </div>
@@ -462,7 +463,7 @@
   var btnZoomIn = document.getElementById("btnZoomIn");
   var btnZoomOut = document.getElementById("btnZoomOut");
 
-  // bottoni flottanti in basso
+  // bottoni flottanti in alto nell'area pop
   var btnZoomIn_f  = document.getElementById("btnZoomIn_f");
   var btnZoomOut_f = document.getElementById("btnZoomOut_f");
   var btnPan_f     = document.getElementById("btnPan_f");
