@@ -31,8 +31,8 @@
     /* Maniglia-cassetto ingrandita con frecce */
     .headerHandle{
       width:100%;
-      height:20px;
-      background:rgba(0,0,0,.18);
+      height:20px;                       /* più alta */
+      background:rgba(0,0,0,.18);        /* un po' più visibile */
       cursor:pointer;
       display:flex;
       align-items:center;
@@ -40,7 +40,7 @@
       position:relative;
     }
     .headerHandle::before{
-      content:"▲ ▼";
+      content:"▲ ▼";                     /* frecce su/giù */
       font-size:11px;
       letter-spacing:3px;
       color:#f5f5f5;
@@ -104,8 +104,7 @@
     }
 
     #board{
-      position:relative;
-      overflow:hidden;
+      position:relative; overflow:hidden;
       touch-action: none;
       background:
         linear-gradient(var(--bg), var(--bg)),
@@ -208,52 +207,52 @@
       font-size:14px; opacity:.55;
     }
 
-    /* Controlli flottanti agganciati all'area dei POP (in alto) */
+    /* Controlli flottanti in basso a destra/sinistra */
     #controlsRight {
-      position:absolute;
-      top:10px;
-      right:20px;
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-      z-index:20;
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 999;
     }
 
     #controlsLeft {
-      position:absolute;
-      top:10px;
-      left:20px;
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-      z-index:20;
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 999;
     }
 
     #controlsRight .btn,
     #controlsLeft .btn {
-      pointer-events:auto;
+      pointer-events: auto;
     }
 
     /* Ingrandisco i pulsanti flottanti +, - e ✋ */
     #controlsRight .btn.tiny {
-      padding:8px 12px;
-      font-size:15px;
-      border-radius:12px;
-      min-width:40px;
+      padding: 8px 12px;
+      font-size: 15px;
+      border-radius: 12px;
+      min-width: 40px;
     }
 
     /* Pan flottante ben visibile quando attivo */
     #btnPan_f.active {
-      background:rgba(0,120,255,.12);
-      border-color:rgba(0,120,255,.8);
-      box-shadow:0 0 0 3px rgba(0,120,255,.25);
+      background: rgba(0,120,255,.12);
+      border-color: rgba(0,120,255,.8);
+      box-shadow: 0 0 0 3px rgba(0,120,255,.25);
     }
 
     /* Sposta flottante ben visibile quando attivo */
     #btnMove_f.active {
-      background:rgba(0,120,255,.12);
-      border-color:rgba(0,120,255,.8);
-      box-shadow:0 0 0 3px rgba(0,120,255,.25);
+      background: rgba(0,120,255,.12);
+      border-color: rgba(0,120,255,.8);
+      box-shadow: 0 0 0 3px rgba(0,120,255,.25);
     }
 
     /* Nascondo i bottoni originali nel header,
@@ -263,7 +262,7 @@
     #btnPan,
     #btnMove,
     #btnLink {
-      display:none !important;
+      display: none !important;
     }
 
     @media print {
@@ -290,37 +289,37 @@
     }
 
     #mapTitle {
-      font-size:22px;
-      font-weight:800;
-      letter-spacing:2px;
-      user-select:none;
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      user-select: none;
       margin-left:auto;
     }
 
     .homeLogo{
-      margin-left:10px;
-      text-decoration:none;
+      margin-left: 10px;
+      text-decoration: none;
     }
     .homeLogo .logoLetters{
-      width:40px;
-      height:40px;
-      border-radius:999px;
-      border:2px solid rgba(0,0,0,.25);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-weight:700;
-      font-size:14px;
-      letter-spacing:2px;
-      color:var(--ink);
-      background:#fff;
-      box-shadow:0 2px 6px rgba(0,0,0,.12);
-      transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      border: 2px solid rgba(0,0,0,.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: 2px;
+      color: var(--ink);
+      background: #fff;
+      box-shadow: 0 2px 6px rgba(0,0,0,.12);
+      transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
     }
     .homeLogo:hover .logoLetters{
-      transform:translateY(-1px);
-      box-shadow:0 4px 10px rgba(0,0,0,.16);
-      border-color:rgba(0,120,255,.6);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(0,0,0,.16);
+      border-color: rgba(0,120,255,.6);
     }
 
     /* POPUP generici */
@@ -344,25 +343,6 @@
     .modal .row{ display:flex; gap:12px; flex-wrap:wrap; margin:10px 0; }
     .modal label{ display:flex; gap:8px; align-items:center; font-size:14px; cursor:pointer; }
     .modal .actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:12px; }
-
-    /* Pulsante doppio Salva rapido / Opzioni salvataggio */
-    .saveSplit{
-      display:inline-flex;
-      flex-direction:column;
-      margin:0 6px;
-    }
-    .saveSplit .btn{
-      padding:4px 10px;
-      font-size:12px;
-      border-radius:0;
-    }
-    .saveSplit .btn.saveTop{
-      border-radius:10px 10px 0 0;
-      border-bottom-width:0;
-    }
-    .saveSplit .btn.saveBottom{
-      border-radius:0 0 10px 10px;
-    }
   </style>
 </head>
 
@@ -377,17 +357,8 @@
       <button class="btn danger" id="btnDelete">Elimina</button>
 
       <button class="btn" id="btnPdf">Stampa in PDF</button>
-
-      <!-- Pulsante doppio -->
-      <div class="saveSplit">
-        <button class="btn saveTop" id="btnQuickSave">
-          <span>Salva rapido</span>
-        </button>
-        <button class="btn saveBottom" id="btnSaveOptions">
-          <span>Opzioni salvataggio</span>
-        </button>
-      </div>
-
+      <button class="btn" id="btnExportJson">salva in JSON</button>
+      <button class="btn" id="btnExportHtml">salva in HTML</button>
       <button class="btn" id="btnImport">Importa HTML/JSON</button>
       <input id="fileInput" type="file" accept=".json,.html" style="display:none" />
 
@@ -426,18 +397,6 @@
     </div>
 
     <div class="ghost">Doppio click sullo sfondo per creare un pop</div>
-
-    <!-- Controlli flottanti POSIZIONATI dentro l'area dei POP -->
-    <div id="controlsLeft">
-      <button class="btn" id="btnMove_f">Sposta</button>
-      <button class="btn" id="btnLink_f">Collega</button>
-    </div>
-
-    <div id="controlsRight">
-      <button class="btn tiny" id="btnZoomIn_f">+</button>
-      <button class="btn tiny" id="btnZoomOut_f">-</button>
-      <button class="btn tiny" id="btnPan_f" title="Pan vista">✋</button>
-    </div>
   </div>
 
   <!-- BOX COMANDI DA TASTIERA -->
@@ -454,35 +413,16 @@
     </div>
   </div>
 
-  <!-- PANNELLO OPZIONI SALVATAGGIO -->
-  <div class="modalOverlay" id="saveOverlay">
-    <div class="modal">
-      <h3>Opzioni di salvataggio</h3>
-      <div class="row">
-        <label>
-          <input type="radio" name="saveFormat" value="json" checked>
-          JSON (dati della mappa)
-        </label>
-        <label>
-          <input type="radio" name="saveFormat" value="html">
-          HTML (pagina con file incorporato)
-        </label>
-      </div>
-      <div class="row">
-        <label style="flex:1; flex-direction:column; align-items:flex-start;">
-          <span>Nome file:</span>
-          <input type="text" id="saveFileName"
-                 style="width:100%; margin-top:4px; padding:4px 6px; font-size:14px; box-sizing:border-box;">
-        </label>
-      </div>
-      <p style="font-size:12px; opacity:0.8; margin:4px 0 0;">
-        Puoi scrivere il nome senza estensione: verrà aggiunta automaticamente (.json o .html).
-      </p>
-      <div class="actions">
-        <button class="btn tiny" id="btnSaveCancel">Annulla</button>
-        <button class="btn tiny" id="btnSaveConfirm">Salva</button>
-      </div>
-    </div>
+  <!-- Nuovi controlli flottanti -->
+  <div id="controlsLeft">
+    <button class="btn" id="btnMove_f">Sposta</button>
+    <button class="btn" id="btnLink_f">Collega</button>
+  </div>
+
+  <div id="controlsRight">
+    <button class="btn tiny" id="btnZoomIn_f">+</button>
+    <button class="btn tiny" id="btnZoomOut_f">-</button>
+    <button class="btn tiny" id="btnPan_f" title="Pan vista">✋</button>
   </div>
 
 </div>
@@ -510,6 +450,8 @@
   var btnLink = document.getElementById("btnLink");
   var btnDelete = document.getElementById("btnDelete");
   var btnPdf = document.getElementById("btnPdf");
+  var btnExportJson = document.getElementById("btnExportJson");
+  var btnExportHtml = document.getElementById("btnExportHtml");
   var btnImport = document.getElementById("btnImport");
   var btnMove = document.getElementById("btnMove");
   var btnPan = document.getElementById("btnPan");
@@ -520,10 +462,11 @@
   var btnZoomIn = document.getElementById("btnZoomIn");
   var btnZoomOut = document.getElementById("btnZoomOut");
 
-  // bottoni flottanti in alto nell'area pop
+  // bottoni flottanti in basso
   var btnZoomIn_f  = document.getElementById("btnZoomIn_f");
   var btnZoomOut_f = document.getElementById("btnZoomOut_f");
   var btnPan_f     = document.getElementById("btnPan_f");
+
   var btnMove_f    = document.getElementById("btnMove_f");
   var btnLink_f    = document.getElementById("btnLink_f");
 
@@ -531,18 +474,6 @@
   var btnSizeSmall = document.getElementById("btnSizeSmall");
   var btnSizeLarge = document.getElementById("btnSizeLarge");
   var btnBold = document.getElementById("btnBold");
-
-  // Nuovi pulsanti salvataggio + overlay
-  var btnQuickSave    = document.getElementById("btnQuickSave");
-  var btnSaveOptions  = document.getElementById("btnSaveOptions");
-  var saveOverlay     = document.getElementById("saveOverlay");
-  var saveFileNameInp = document.getElementById("saveFileName");
-  var btnSaveCancel   = document.getElementById("btnSaveCancel");
-  var btnSaveConfirm  = document.getElementById("btnSaveConfirm");
-
-  // stato ultimo salvataggio
-  var lastSaveBaseName = "";
-  var lastSaveFormat   = "json";
 
   function setStatus(msg){ statusEl.textContent = msg; }
   function uid(){ return Math.random().toString(36).slice(2, 10); }
@@ -893,95 +824,70 @@
     updateTextControls();
   }
 
-  // --- GESTIONE MODALITÀ: PAN, SPOSTA, COLLEGA ---
-
   function setPanMode(on){
     panMode = !!on;
-
     if (panMode){
-      // disattivo move & collega
-      setMoveMode(false);
-      setLinkMode(false);
-
-      if (btnPan)   btnPan.classList.add("active");
+      btnPan.classList.add("active");
       if (btnPan_f) btnPan_f.classList.add("active");
-
       setStatus("Modalità Pan: trascina lo sfondo per spostarti.");
     } else {
-      if (btnPan)   btnPan.classList.remove("active");
+      btnPan.classList.remove("active");
       if (btnPan_f) btnPan_f.classList.remove("active");
       setStatus("Pronto");
     }
   }
 
-  function setMoveMode(on) {
-    moveMode = !!on;
-
-    if (moveMode) {
-      // disattivo pan & collega
-      setPanMode(false);
-      setLinkMode(false);
-
-      if (btnMove)   btnMove.classList.add("active");
-      if (btnMove_f) btnMove_f.classList.add("active");
-      setStatus("Modalità sposta: trascina i box.");
-    } else {
-      if (btnMove)   btnMove.classList.remove("active");
-      if (btnMove_f) btnMove_f.classList.remove("active");
-      setStatus("Pronto");
-    }
-
-    // in modalità sposta rendo i textarea readOnly, così il drag funziona ovunque
-    var tas = document.querySelectorAll(".pop .body");
-    for (var i = 0; i < tas.length; i++) {
-      tas[i].readOnly = moveMode;
-    }
-  }
-
   function setLinkMode(on) {
     if (on) {
-      // disattivo pan & move
-      setPanMode(false);
-      setMoveMode(false);
-
-      if (!selectedBoxId) { 
-        setStatus("Seleziona un box prima di collegare."); 
-        return; 
-      }
+      if (moveMode) setMoveMode(false);
+      if (panMode) setPanMode(false);
+      if (!selectedBoxId) { setStatus("Seleziona un box prima di collegare."); return; }
 
       linkPreset = linkPreset || { end:"arrow", shape:"straight", curveDir:1 };
 
       openLinkOptions(function (ok) {
-        if (!ok) { 
-          setStatus("Collegamento annullato."); 
-          return; 
-        }
+        if (!ok) { setStatus("Collegamento annullato."); return; }
 
         linkingFrom = selectedBoxId;
-
-        if (btnLink)   btnLink.classList.add("active");
-        if (btnLink_f) btnLink_f.classList.add("active");
-
+        btnLink.classList.add("active");
         var a = document.querySelectorAll(".pop");
         for (var i=0;i<a.length;i++) {
           a[i].classList.toggle("linking", a[i].dataset.id === linkingFrom);
         }
-        setStatus("Modalità collega: clicca un altro box.");
+        setStatus("Modalita collega: clicca un altro box.");
       });
 
       return;
     } else {
       linkingFrom = null;
-
-      if (btnLink)   btnLink.classList.remove("active");
-      if (btnLink_f) btnLink_f.classList.remove("active");
-
+      btnLink.classList.remove("active");
       var b = document.querySelectorAll(".pop");
       for (var j=0;j<b.length;j++) b[j].classList.remove("linking");
       setStatus("Pronto");
     }
   }
-    
+      
+  function setMoveMode(on) {
+    moveMode = !!on;
+
+    if (moveMode) {
+      setLinkMode(false);
+      setPanMode(false);
+      btnMove.classList.add("active");
+      if (btnMove_f) btnMove_f.classList.add("active");
+      setStatus("Modalita sposta: trascina i box.");
+    } else {
+      btnMove.classList.remove("active");
+      if (btnMove_f) btnMove_f.classList.remove("active");
+      setStatus("Pronto");
+    }
+
+    var tas = document.querySelectorAll(".pop .body");
+    for (var i = 0; i < tas.length; i++) {
+      tas[i].readOnly = moveMode;
+    }
+  }
+  
   function autoGrow(ta, popModel) {
     ta.style.height = "auto";
 
@@ -1041,7 +947,7 @@
     selectBox(p.id);
 
     setStatus(
-      "Suggerimento: scrivi quello che ti viene in mente quando pensi all'argomento principale di questa mappa. Collega poi il riquadro con il tuo argomento principale ."
+      "Suggerimento: scrivi un concetto chiave senza articoli o aggettivi (es. SI: Napoleone — NO: il grande Napoleone)."
     );
 
     var el = document.querySelector('.pop[data-id="' + p.id + '"] .body');
@@ -1343,24 +1249,14 @@
     setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
   }
 
-  function exportJSON(customBaseName) {
-    var stateStr = JSON.stringify(getState(), null, 2);
-    var blob = new Blob([stateStr], { type: "application/json;charset=utf-8" });
-
-    var filename;
-    if (customBaseName && customBaseName.trim()) {
-      var base = customBaseName.trim();
-      if (!/\.(json)$/i.test(base)) base += ".json";
-      filename = base;
-    } else {
-      filename = "mappa_" + new Date().toISOString().slice(0,19).split(":").join("-") + ".json";
-    }
-
-    downloadBlob(filename, blob);
-    setStatus("Esportato JSON (" + filename + ").");
+  function exportJSON() {
+    var blob = new Blob([JSON.stringify(getState(), null, 2)], { type: "application/json;charset=utf-8" });
+    var name = "mappa_" + new Date().toISOString().slice(0,19).split(":").join("-") + ".json";
+    downloadBlob(name, blob);
+    setStatus("Esportato JSON.");
   }
 
-  function exportHTML(customBaseName) {
+  function exportHTML() {
     var state = JSON.stringify(getState(), null, 2);
 
     var html =
@@ -1381,18 +1277,9 @@
       '</html>';
 
     var blob = new Blob([html], { type: "text/html;charset=utf-8" });
-
-    var filename;
-    if (customBaseName && customBaseName.trim()) {
-      var base = customBaseName.trim();
-      if (!/\.(html?|htm)$/i.test(base)) base += ".html";
-      filename = base;
-    } else {
-      filename = "mappa_" + new Date().toISOString().slice(0,19).replace(/:/g,'-') + ".html";
-    }
-
-    downloadBlob(filename, blob);
-    setStatus("Esportato HTML (" + filename + ").");
+    var name = "mappa_" + new Date().toISOString().slice(0,19).replace(/:/g,'-') + ".html";
+    downloadBlob(name, blob);
+    setStatus("Esportato HTML.");
   }
   
   function parseImportedText(text) {
@@ -1451,30 +1338,14 @@
     if (key === "escape") setLinkMode(false);
   });
 
-  if (btnNew) {
   btnNew.addEventListener("click", function () {
     var r = boardRect();
     createPop(20 + Math.random()*(r.width-260), 20 + Math.random()*(r.height-160));
   });
-}
-
-if (btnLink) {
-  btnLink.addEventListener("click", function () { 
-    setLinkMode(!linkingFrom); 
-  });
-}
-
-if (btnDelete) {
+  btnLink.addEventListener("click", function () { setLinkMode(!linkingFrom); });
   btnDelete.addEventListener("click", deleteSelected);
-}
+  btnMove.addEventListener("click", function () { setMoveMode(!moveMode); });
 
-if (btnMove) {
-  btnMove.addEventListener("click", function () { 
-    setMoveMode(!moveMode); 
-  });
-}
-
-if (btnPan) {
   btnPan.addEventListener("click", function () {
     var newOn = !panMode;
     if (newOn) {
@@ -1483,29 +1354,45 @@ if (btnPan) {
     }
     setPanMode(newOn);
   });
-}
 
-if (btnPdf) {
   btnPdf.addEventListener("click", exportPDF);
-}
-
-if (btnImport) {
+  btnExportJson.addEventListener("click", exportJSON);
+  btnExportHtml.addEventListener("click", exportHTML);
   btnImport.addEventListener("click", doImport);
-}
+  btnZoomIn.addEventListener("click", function(){ zoomAroundCenter(1.15); });
+  btnZoomOut.addEventListener("click", function(){ zoomAroundCenter(1/1.15); });
 
-if (btnZoomIn) {
-  btnZoomIn.addEventListener("click", function(){
-    zoomAroundCenter(1.15);
-  });
-}
+  // Collego i pulsanti flottanti alle stesse azioni dei bottoni originali
+  if (btnZoomIn_f) {
+    btnZoomIn_f.addEventListener("click", function(){
+      btnZoomIn.click();
+    });
+  }
 
-if (btnZoomOut) {
-  btnZoomOut.addEventListener("click", function(){
-    zoomAroundCenter(1/1.15);
-  });
-}
+  if (btnZoomOut_f) {
+    btnZoomOut_f.addEventListener("click", function(){
+      btnZoomOut.click();
+    });
+  }
 
- 
+  if (btnPan_f) {
+    btnPan_f.addEventListener("click", function(){
+      btnPan.click();
+    });
+  }
+
+  if (btnMove_f) {
+    btnMove_f.addEventListener("click", function(){
+      btnMove.click();
+    });
+  }
+
+  if (btnLink_f) {
+    btnLink_f.addEventListener("click", function(){
+      btnLink.click();
+    });
+  }
+
   txtColor.addEventListener("input", function(){
     if (!selectedBoxId) return;
     var p = pops.find(function(pp){ return pp.id === selectedBoxId; });
@@ -1520,54 +1407,6 @@ if (btnZoomOut) {
 
     renderLinks();
   });
-
-    // --- Collego i pulsanti flottanti alle funzioni interne ---
-
-  // Zoom +
-  if (btnZoomIn_f) {
-    btnZoomIn_f.addEventListener("click", function () {
-      setStatus("Zoom +");
-      zoomAroundCenter(1.15);
-    });
-  }
-
-  // Zoom -
-  if (btnZoomOut_f) {
-    btnZoomOut_f.addEventListener("click", function () {
-      setStatus("Zoom -");
-      zoomAroundCenter(1 / 1.15);
-    });
-  }
-
-  // Pan (✋)
-  if (btnPan_f) {
-    btnPan_f.addEventListener("click", function () {
-      var newOn = !panMode;
-      setPanMode(newOn);
-      setStatus(newOn ? "Pan attivo: trascina lo sfondo" : "Pan disattivato");
-    });
-  }
-
-  // Sposta (trascina i box)
-  if (btnMove_f) {
-    btnMove_f.addEventListener("click", function () {
-      var newOn = !moveMode;
-      setMoveMode(newOn);
-      setStatus(newOn ? "Sposta attivo: trascina i box" : "Sposta disattivato");
-    });
-  }
-
-  // Collega
-  if (btnLink_f) {
-    btnLink_f.addEventListener("click", function () {
-      // se non c'è un box selezionato, lo diciamo subito
-      if (!selectedBoxId && !linkingFrom) {
-        setStatus("Prima clicca su un box, poi su Collega");
-        return;
-      }
-      setLinkMode(!linkingFrom);
-    });
-  }
 
   btnSizeSmall.addEventListener("click", function(){
     if (!selectedBoxId) return;
@@ -1637,92 +1476,6 @@ if (btnZoomOut) {
       kbdOverlay.style.display = "none";
     }
   });
-
-  // --- PANNELLO OPZIONI SALVATAGGIO ---
-  function openSaveOverlay() {
-    if (!saveOverlay) return;
-
-    if (saveFileNameInp) {
-      saveFileNameInp.value = lastSaveBaseName || "";
-    }
-
-    var radios = saveOverlay.querySelectorAll('input[name="saveFormat"]');
-    var current = lastSaveFormat || "json";
-    radios.forEach(function(r){
-      r.checked = (r.value === current);
-    });
-
-    saveOverlay.style.display = "flex";
-    if (saveFileNameInp) {
-      setTimeout(function(){
-        saveFileNameInp.focus();
-        saveFileNameInp.select();
-      }, 50);
-    }
-  }
-
-  function closeSaveOverlay() {
-    if (saveOverlay) saveOverlay.style.display = "none";
-  }
-
-  if (btnSaveOptions) {
-    btnSaveOptions.addEventListener("click", function(){
-      openSaveOverlay();
-    });
-  }
-
-  if (btnSaveCancel) {
-    btnSaveCancel.addEventListener("click", function(){
-      closeSaveOverlay();
-    });
-  }
-
-  if (saveOverlay) {
-    saveOverlay.addEventListener("click", function(e){
-      if (e.target === saveOverlay) {
-        closeSaveOverlay();
-      }
-    });
-  }
-
-  if (btnSaveConfirm) {
-    btnSaveConfirm.addEventListener("click", function(){
-      if (!saveOverlay) return;
-
-      var baseName = (saveFileNameInp && saveFileNameInp.value.trim()) || "";
-      if (!baseName) {
-        baseName = "mappa_mentale";
-      }
-
-      var radios = saveOverlay.querySelectorAll('input[name="saveFormat"]');
-      var chosen = "json";
-      radios.forEach(function(r){
-        if (r.checked) chosen = r.value;
-      });
-
-      lastSaveBaseName = baseName;
-      lastSaveFormat   = chosen;
-
-      if (chosen === "html") {
-        exportHTML(baseName);
-      } else {
-        exportJSON(baseName);
-      }
-
-      closeSaveOverlay();
-    });
-  }
-
-  // Salva rapido: sempre JSON, riusa il nome dell'ultima volta (se presente)
-  if (btnQuickSave) {
-    btnQuickSave.addEventListener("click", function(){
-      if (lastSaveBaseName) {
-        exportJSON(lastSaveBaseName);
-      } else {
-        exportJSON(null);
-      }
-    });
-  }
 
   render();
   setStatus("Pronto");
