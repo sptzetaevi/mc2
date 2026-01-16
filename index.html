@@ -893,48 +893,84 @@
     updateTextControls();
   }
 
-  function setPanMode(on){
-    panMode = !!on;
-    if (panMode){
-      btnPan.classList.add("active");
-      if (btnPan_f) btnPan_f.classList.add("active");
-      setStatus("Modalità Pan: trascina lo sfondo per spostarti.");
-    } else {
-      btnPan.classList.remove("active");
-      if (btnPan_f) btnPan_f.classList.remove("active");
-      setStatus("Pronto");
-    }
+  
+
+ function setPanMode(on){
+  panMode = !!on;
+
+  if (panMode){
+    if (btnPan)    btnPan.classList.add("active");
+    if (btnPan_f)  btnPan_f.classList.add("active");
+    setStatus("Modalità Pan: trascina lo sfondo per spostarti.");
+  } else {
+    if (btnPan)    btnPan.classList.remove("active");
+    if (btnPan_f)  btnPan_f.classList.remove("active");
+    setStatus("Pronto");
+  }
+}
+
+function setMoveMode(on) {
+  moveMode = !!on;
+
+  if (moveMode) {
+    setLinkMode(false);
+    setPanMode(false);
+    if (btnMove)   btnMove.classList.add("active");
+    if (btnMove_f) btnMove_f.classList.add("active");
+    setStatus("Modalita sposta: trascina i box.");
+  } else {
+    if (btnMove)   btnMove.classList.remove("active");
+    if (btnMove_f) btnMove_f.classList.remove("active");
+    setStatus("Pronto");
   }
 
-  function setLinkMode(on) {
-    if (on) {
-      if (moveMode) setMoveMode(false);
-      if (panMode) setPanMode(false);
-      if (!selectedBoxId) { setStatus("Seleziona un box prima di collegare."); return; }
-
-      linkPreset = linkPreset || { end:"arrow", shape:"straight", curveDir:1 };
-
-      openLinkOptions(function (ok) {
-        if (!ok) { setStatus("Collegamento annullato."); return; }
-
-        linkingFrom = selectedBoxId;
-        btnLink.classList.add("active");
-        var a = document.querySelectorAll(".pop");
-        for (var i=0;i<a.length;i++) {
-          a[i].classList.toggle("linking", a[i].dataset.id === linkingFrom);
-        }
-        setStatus("Modalita collega: clicca un altro box.");
-      });
-
-      return;
-    } else {
-      linkingFrom = null;
-      btnLink.classList.remove("active");
-      var b = document.querySelectorAll(".pop");
-      for (var j=0;j<b.length;j++) b[j].classList.remove("linking");
-      setStatus("Pronto");
-    }
+  var tas = document.querySelectorAll(".pop .body");
+  for (var i = 0; i < tas.length; i++) {
+    tas[i].readOnly = moveMode;
   }
+}
+
+function setLinkMode(on) {
+  if (on) {
+    if (moveMode) setMoveMode(false);
+    if (panMode)  setPanMode(false);
+    if (!selectedBoxId) { 
+      setStatus("Seleziona un box prima di collegare."); 
+      return; 
+    }
+
+    linkPreset = linkPreset || { end:"arrow", shape:"straight", curveDir:1 };
+
+    openLinkOptions(function (ok) {
+      if (!ok) { 
+        setStatus("Collegamento annullato."); 
+        return; 
+      }
+
+      linkingFrom = selectedBoxId;
+
+      if (btnLink)   btnLink.classList.add("active");
+      if (btnLink_f) btnLink_f.classList.add("active");
+
+      var a = document.querySelectorAll(".pop");
+      for (var i=0;i<a.length;i++) {
+        a[i].classList.toggle("linking", a[i].dataset.id === linkingFrom);
+      }
+      setStatus("Modalita collega: clicca un altro box.");
+    });
+
+    return;
+  } else {
+    linkingFrom = null;
+
+    if (btnLink)   btnLink.classList.remove("active");
+    if (btnLink_f) btnLink_f.classList.remove("active");
+
+    var b = document.querySelectorAll(".pop");
+    for (var j=0;j<b.length;j++) b[j].classList.remove("linking");
+    setStatus("Pronto");
+  }
+}
       
   function setMoveMode(on) {
     moveMode = !!on;
@@ -1426,14 +1462,30 @@
     if (key === "escape") setLinkMode(false);
   });
 
+  if (btnNew) {
   btnNew.addEventListener("click", function () {
     var r = boardRect();
     createPop(20 + Math.random()*(r.width-260), 20 + Math.random()*(r.height-160));
   });
-  btnLink.addEventListener("click", function () { setLinkMode(!linkingFrom); });
-  btnDelete.addEventListener("click", deleteSelected);
-  btnMove.addEventListener("click", function () { setMoveMode(!moveMode); });
+}
 
+if (btnLink) {
+  btnLink.addEventListener("click", function () { 
+    setLinkMode(!linkingFrom); 
+  });
+}
+
+if (btnDelete) {
+  btnDelete.addEventListener("click", deleteSelected);
+}
+
+if (btnMove) {
+  btnMove.addEventListener("click", function () { 
+    setMoveMode(!moveMode); 
+  });
+}
+
+if (btnPan) {
   btnPan.addEventListener("click", function () {
     var newOn = !panMode;
     if (newOn) {
@@ -1442,11 +1494,27 @@
     }
     setPanMode(newOn);
   });
+}
 
+if (btnPdf) {
   btnPdf.addEventListener("click", exportPDF);
+}
+
+if (btnImport) {
   btnImport.addEventListener("click", doImport);
-  btnZoomIn.addEventListener("click", function(){ zoomAroundCenter(1.15); });
-  btnZoomOut.addEventListener("click", function(){ zoomAroundCenter(1/1.15); });
+}
+
+if (btnZoomIn) {
+  btnZoomIn.addEventListener("click", function(){
+    zoomAroundCenter(1.15);
+  });
+}
+
+if (btnZoomOut) {
+  btnZoomOut.addEventListener("click", function(){
+    zoomAroundCenter(1/1.15);
+  });
+}
 
   // --- Collego i pulsanti flottanti alle funzioni interne (non più .click() su bottoni nascosti) ---
   if (btnZoomIn_f) {
