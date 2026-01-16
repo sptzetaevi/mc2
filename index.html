@@ -1505,42 +1505,7 @@ if (btnZoomOut) {
   });
 }
 
-  // --- Collego i pulsanti flottanti alle funzioni interne (non più .click() su bottoni nascosti) ---
-  if (btnZoomIn_f) {
-    btnZoomIn_f.addEventListener("click", function(){
-      zoomAroundCenter(1.15);
-    });
-  }
-
-  if (btnZoomOut_f) {
-    btnZoomOut_f.addEventListener("click", function(){
-      zoomAroundCenter(1/1.15);
-    });
-  }
-
-  if (btnPan_f) {
-    btnPan_f.addEventListener("click", function(){
-      var newOn = !panMode;
-      if (newOn) {
-        setMoveMode(false);
-        setLinkMode(false);
-      }
-      setPanMode(newOn);
-    });
-  }
-
-  if (btnMove_f) {
-    btnMove_f.addEventListener("click", function(){
-      setMoveMode(!moveMode);
-    });
-  }
-
-  if (btnLink_f) {
-    btnLink_f.addEventListener("click", function(){
-      setLinkMode(!linkingFrom);
-    });
-  }
-
+ 
   txtColor.addEventListener("input", function(){
     if (!selectedBoxId) return;
     var p = pops.find(function(pp){ return pp.id === selectedBoxId; });
@@ -1555,6 +1520,54 @@ if (btnZoomOut) {
 
     renderLinks();
   });
+
+    // --- Collego i pulsanti flottanti alle funzioni interne ---
+
+  // Zoom +
+  if (btnZoomIn_f) {
+    btnZoomIn_f.addEventListener("click", function () {
+      setStatus("Zoom +");
+      zoomAroundCenter(1.15);
+    });
+  }
+
+  // Zoom -
+  if (btnZoomOut_f) {
+    btnZoomOut_f.addEventListener("click", function () {
+      setStatus("Zoom -");
+      zoomAroundCenter(1 / 1.15);
+    });
+  }
+
+  // Pan (✋)
+  if (btnPan_f) {
+    btnPan_f.addEventListener("click", function () {
+      var newOn = !panMode;
+      setPanMode(newOn);
+      setStatus(newOn ? "Pan attivo: trascina lo sfondo" : "Pan disattivato");
+    });
+  }
+
+  // Sposta (trascina i box)
+  if (btnMove_f) {
+    btnMove_f.addEventListener("click", function () {
+      var newOn = !moveMode;
+      setMoveMode(newOn);
+      setStatus(newOn ? "Sposta attivo: trascina i box" : "Sposta disattivato");
+    });
+  }
+
+  // Collega
+  if (btnLink_f) {
+    btnLink_f.addEventListener("click", function () {
+      // se non c'è un box selezionato, lo diciamo subito
+      if (!selectedBoxId && !linkingFrom) {
+        setStatus("Prima clicca su un box, poi su Collega");
+        return;
+      }
+      setLinkMode(!linkingFrom);
+    });
+  }
 
   btnSizeSmall.addEventListener("click", function(){
     if (!selectedBoxId) return;
