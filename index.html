@@ -1448,34 +1448,39 @@
   btnZoomIn.addEventListener("click", function(){ zoomAroundCenter(1.15); });
   btnZoomOut.addEventListener("click", function(){ zoomAroundCenter(1/1.15); });
 
-  // Collego i pulsanti flottanti alle stesse azioni dei bottoni originali
+  // --- Collego i pulsanti flottanti alle funzioni interne (non più .click() su bottoni nascosti) ---
   if (btnZoomIn_f) {
     btnZoomIn_f.addEventListener("click", function(){
-      btnZoomIn.click();
+      zoomAroundCenter(1.15);
     });
   }
 
   if (btnZoomOut_f) {
     btnZoomOut_f.addEventListener("click", function(){
-      btnZoomOut.click();
+      zoomAroundCenter(1/1.15);
     });
   }
 
   if (btnPan_f) {
     btnPan_f.addEventListener("click", function(){
-      btnPan.click();
+      var newOn = !panMode;
+      if (newOn) {
+        setMoveMode(false);
+        setLinkMode(false);
+      }
+      setPanMode(newOn);
     });
   }
 
   if (btnMove_f) {
     btnMove_f.addEventListener("click", function(){
-      btnMove.click();
+      setMoveMode(!moveMode);
     });
   }
 
   if (btnLink_f) {
     btnLink_f.addEventListener("click", function(){
-      btnLink.click();
+      setLinkMode(!linkingFrom);
     });
   }
 
