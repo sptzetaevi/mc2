@@ -31,8 +31,8 @@
     /* Maniglia-cassetto ingrandita con frecce */
     .headerHandle{
       width:100%;
-      height:20px;                       /* più alta */
-      background:rgba(0,0,0,.18);        /* un po' più visibile */
+      height:20px;
+      background:rgba(0,0,0,.18);
       cursor:pointer;
       display:flex;
       align-items:center;
@@ -40,7 +40,7 @@
       position:relative;
     }
     .headerHandle::before{
-      content:"▲ ▼";                     /* frecce su/giù */
+      content:"▲ ▼";
       font-size:11px;
       letter-spacing:3px;
       color:#f5f5f5;
@@ -344,6 +344,25 @@
     .modal .row{ display:flex; gap:12px; flex-wrap:wrap; margin:10px 0; }
     .modal label{ display:flex; gap:8px; align-items:center; font-size:14px; cursor:pointer; }
     .modal .actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:12px; }
+
+    /* Pulsante doppio Salva rapido / Opzioni salvataggio */
+    .saveSplit{
+      display:inline-flex;
+      flex-direction:column;
+      margin:0 6px;
+    }
+    .saveSplit .btn{
+      padding:4px 10px;
+      font-size:12px;
+      border-radius:0;
+    }
+    .saveSplit .btn.saveTop{
+      border-radius:10px 10px 0 0;
+      border-bottom-width:0;
+    }
+    .saveSplit .btn.saveBottom{
+      border-radius:0 0 10px 10px;
+    }
   </style>
 </head>
 
@@ -358,8 +377,17 @@
       <button class="btn danger" id="btnDelete">Elimina</button>
 
       <button class="btn" id="btnPdf">Stampa in PDF</button>
-      <button class="btn" id="btnExportJson">salva in JSON</button>
-      <button class="btn" id="btnExportHtml">salva in HTML</button>
+
+      <!-- Pulsante doppio -->
+      <div class="saveSplit">
+        <button class="btn saveTop" id="btnQuickSave">
+          <span>Salva rapido</span>
+        </button>
+        <button class="btn saveBottom" id="btnSaveOptions">
+          <span>Opzioni salvataggio</span>
+        </button>
+      </div>
+
       <button class="btn" id="btnImport">Importa HTML/JSON</button>
       <input id="fileInput" type="file" accept=".json,.html" style="display:none" />
 
@@ -426,6 +454,37 @@
     </div>
   </div>
 
+  <!-- PANNELLO OPZIONI SALVATAGGIO -->
+  <div class="modalOverlay" id="saveOverlay">
+    <div class="modal">
+      <h3>Opzioni di salvataggio</h3>
+      <div class="row">
+        <label>
+          <input type="radio" name="saveFormat" value="json" checked>
+          JSON (dati della mappa)
+        </label>
+        <label>
+          <input type="radio" name="saveFormat" value="html">
+          HTML (pagina con file incorporato)
+        </label>
+      </div>
+      <div class="row">
+        <label style="flex:1; flex-direction:column; align-items:flex-start;">
+          <span>Nome file:</span>
+          <input type="text" id="saveFileName"
+                 style="width:100%; margin-top:4px; padding:4px 6px; font-size:14px; box-sizing:border-box;">
+        </label>
+      </div>
+      <p style="font-size:12px; opacity:0.8; margin:4px 0 0;">
+        Puoi scrivere il nome senza estensione: verrà aggiunta automaticamente (.json o .html).
+      </p>
+      <div class="actions">
+        <button class="btn tiny" id="btnSaveCancel">Annulla</button>
+        <button class="btn tiny" id="btnSaveConfirm">Salva</button>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -451,8 +510,6 @@
   var btnLink = document.getElementById("btnLink");
   var btnDelete = document.getElementById("btnDelete");
   var btnPdf = document.getElementById("btnPdf");
-  var btnExportJson = document.getElementById("btnExportJson");
-  var btnExportHtml = document.getElementById("btnExportHtml");
   var btnImport = document.getElementById("btnImport");
   var btnMove = document.getElementById("btnMove");
   var btnPan = document.getElementById("btnPan");
@@ -467,7 +524,6 @@
   var btnZoomIn_f  = document.getElementById("btnZoomIn_f");
   var btnZoomOut_f = document.getElementById("btnZoomOut_f");
   var btnPan_f     = document.getElementById("btnPan_f");
-
   var btnMove_f    = document.getElementById("btnMove_f");
   var btnLink_f    = document.getElementById("btnLink_f");
 
@@ -475,6 +531,18 @@
   var btnSizeSmall = document.getElementById("btnSizeSmall");
   var btnSizeLarge = document.getElementById("btnSizeLarge");
   var btnBold = document.getElementById("btnBold");
+
+  // Nuovi pulsanti salvataggio + overlay
+  var btnQuickSave    = document.getElementById("btnQuickSave");
+  var btnSaveOptions  = document.getElementById("btnSaveOptions");
+  var saveOverlay     = document.getElementById("saveOverlay");
+  var saveFileNameInp = document.getElementById("saveFileName");
+  var btnSaveCancel   = document.getElementById("btnSaveCancel");
+  var btnSaveConfirm  = document.getElementById("btnSaveConfirm");
+
+  // stato ultimo salvataggio
+  var lastSaveBaseName = "";
+  var lastSaveFormat   = "json";
 
   function setStatus(msg){ statusEl.textContent = msg; }
   function uid(){ return Math.random().toString(36).slice(2, 10); }
@@ -948,7 +1016,7 @@
     selectBox(p.id);
 
     setStatus(
-      "Suggerimento: scrivi un concetto chiave senza articoli o aggettivi (es. SI: Napoleone — NO: il grande Napoleone)."
+      "Suggerimento: scrivi quello che ti viene in mente quando pensi all'argomento principale di questa mappa. Collega poi il riquadro con il tuo argomento principale ."
     );
 
     var el = document.querySelector('.pop[data-id="' + p.id + '"] .body');
@@ -1250,14 +1318,24 @@
     setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
   }
 
-  function exportJSON() {
-    var blob = new Blob([JSON.stringify(getState(), null, 2)], { type: "application/json;charset=utf-8" });
-    var name = "mappa_" + new Date().toISOString().slice(0,19).split(":").join("-") + ".json";
-    downloadBlob(name, blob);
-    setStatus("Esportato JSON.");
+  function exportJSON(customBaseName) {
+    var stateStr = JSON.stringify(getState(), null, 2);
+    var blob = new Blob([stateStr], { type: "application/json;charset=utf-8" });
+
+    var filename;
+    if (customBaseName && customBaseName.trim()) {
+      var base = customBaseName.trim();
+      if (!/\.(json)$/i.test(base)) base += ".json";
+      filename = base;
+    } else {
+      filename = "mappa_" + new Date().toISOString().slice(0,19).split(":").join("-") + ".json";
+    }
+
+    downloadBlob(filename, blob);
+    setStatus("Esportato JSON (" + filename + ").");
   }
 
-  function exportHTML() {
+  function exportHTML(customBaseName) {
     var state = JSON.stringify(getState(), null, 2);
 
     var html =
@@ -1278,9 +1356,18 @@
       '</html>';
 
     var blob = new Blob([html], { type: "text/html;charset=utf-8" });
-    var name = "mappa_" + new Date().toISOString().slice(0,19).replace(/:/g,'-') + ".html";
-    downloadBlob(name, blob);
-    setStatus("Esportato HTML.");
+
+    var filename;
+    if (customBaseName && customBaseName.trim()) {
+      var base = customBaseName.trim();
+      if (!/\.(html?|htm)$/i.test(base)) base += ".html";
+      filename = base;
+    } else {
+      filename = "mappa_" + new Date().toISOString().slice(0,19).replace(/:/g,'-') + ".html";
+    }
+
+    downloadBlob(filename, blob);
+    setStatus("Esportato HTML (" + filename + ").");
   }
   
   function parseImportedText(text) {
@@ -1357,8 +1444,6 @@
   });
 
   btnPdf.addEventListener("click", exportPDF);
-  btnExportJson.addEventListener("click", exportJSON);
-  btnExportHtml.addEventListener("click", exportHTML);
   btnImport.addEventListener("click", doImport);
   btnZoomIn.addEventListener("click", function(){ zoomAroundCenter(1.15); });
   btnZoomOut.addEventListener("click", function(){ zoomAroundCenter(1/1.15); });
@@ -1477,6 +1562,92 @@
       kbdOverlay.style.display = "none";
     }
   });
+
+  // --- PANNELLO OPZIONI SALVATAGGIO ---
+  function openSaveOverlay() {
+    if (!saveOverlay) return;
+
+    if (saveFileNameInp) {
+      saveFileNameInp.value = lastSaveBaseName || "";
+    }
+
+    var radios = saveOverlay.querySelectorAll('input[name="saveFormat"]');
+    var current = lastSaveFormat || "json";
+    radios.forEach(function(r){
+      r.checked = (r.value === current);
+    });
+
+    saveOverlay.style.display = "flex";
+    if (saveFileNameInp) {
+      setTimeout(function(){
+        saveFileNameInp.focus();
+        saveFileNameInp.select();
+      }, 50);
+    }
+  }
+
+  function closeSaveOverlay() {
+    if (saveOverlay) saveOverlay.style.display = "none";
+  }
+
+  if (btnSaveOptions) {
+    btnSaveOptions.addEventListener("click", function(){
+      openSaveOverlay();
+    });
+  }
+
+  if (btnSaveCancel) {
+    btnSaveCancel.addEventListener("click", function(){
+      closeSaveOverlay();
+    });
+  }
+
+  if (saveOverlay) {
+    saveOverlay.addEventListener("click", function(e){
+      if (e.target === saveOverlay) {
+        closeSaveOverlay();
+      }
+    });
+  }
+
+  if (btnSaveConfirm) {
+    btnSaveConfirm.addEventListener("click", function(){
+      if (!saveOverlay) return;
+
+      var baseName = (saveFileNameInp && saveFileNameInp.value.trim()) || "";
+      if (!baseName) {
+        baseName = "mappa_mentale";
+      }
+
+      var radios = saveOverlay.querySelectorAll('input[name="saveFormat"]');
+      var chosen = "json";
+      radios.forEach(function(r){
+        if (r.checked) chosen = r.value;
+      });
+
+      lastSaveBaseName = baseName;
+      lastSaveFormat   = chosen;
+
+      if (chosen === "html") {
+        exportHTML(baseName);
+      } else {
+        exportJSON(baseName);
+      }
+
+      closeSaveOverlay();
+    });
+  }
+
+  // Salva rapido: sempre JSON, riusa il nome dell'ultima volta (se presente)
+  if (btnQuickSave) {
+    btnQuickSave.addEventListener("click", function(){
+      if (lastSaveBaseName) {
+        exportJSON(lastSaveBaseName);
+      } else {
+        exportJSON(null);
+      }
+    });
+  }
 
   render();
   setStatus("Pronto");
