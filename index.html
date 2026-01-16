@@ -893,106 +893,95 @@
     updateTextControls();
   }
 
-  
+  // --- GESTIONE MODALITÀ: PAN, SPOSTA, COLLEGA ---
 
- function setPanMode(on){
-  panMode = !!on;
+  function setPanMode(on){
+    panMode = !!on;
 
-  if (panMode){
-    if (btnPan)    btnPan.classList.add("active");
-    if (btnPan_f)  btnPan_f.classList.add("active");
-    setStatus("Modalità Pan: trascina lo sfondo per spostarti.");
-  } else {
-    if (btnPan)    btnPan.classList.remove("active");
-    if (btnPan_f)  btnPan_f.classList.remove("active");
-    setStatus("Pronto");
-  }
-}
+    if (panMode){
+      // disattivo move & collega
+      setMoveMode(false);
+      setLinkMode(false);
 
-function setMoveMode(on) {
-  moveMode = !!on;
+      if (btnPan)   btnPan.classList.add("active");
+      if (btnPan_f) btnPan_f.classList.add("active");
 
-  if (moveMode) {
-    setLinkMode(false);
-    setPanMode(false);
-    if (btnMove)   btnMove.classList.add("active");
-    if (btnMove_f) btnMove_f.classList.add("active");
-    setStatus("Modalita sposta: trascina i box.");
-  } else {
-    if (btnMove)   btnMove.classList.remove("active");
-    if (btnMove_f) btnMove_f.classList.remove("active");
-    setStatus("Pronto");
-  }
-
-  var tas = document.querySelectorAll(".pop .body");
-  for (var i = 0; i < tas.length; i++) {
-    tas[i].readOnly = moveMode;
-  }
-}
-
-function setLinkMode(on) {
-  if (on) {
-    if (moveMode) setMoveMode(false);
-    if (panMode)  setPanMode(false);
-    if (!selectedBoxId) { 
-      setStatus("Seleziona un box prima di collegare."); 
-      return; 
+      setStatus("Modalità Pan: trascina lo sfondo per spostarti.");
+    } else {
+      if (btnPan)   btnPan.classList.remove("active");
+      if (btnPan_f) btnPan_f.classList.remove("active");
+      setStatus("Pronto");
     }
-
-    linkPreset = linkPreset || { end:"arrow", shape:"straight", curveDir:1 };
-
-    openLinkOptions(function (ok) {
-      if (!ok) { 
-        setStatus("Collegamento annullato."); 
-        return; 
-      }
-
-      linkingFrom = selectedBoxId;
-
-      if (btnLink)   btnLink.classList.add("active");
-      if (btnLink_f) btnLink_f.classList.add("active");
-
-      var a = document.querySelectorAll(".pop");
-      for (var i=0;i<a.length;i++) {
-        a[i].classList.toggle("linking", a[i].dataset.id === linkingFrom);
-      }
-      setStatus("Modalita collega: clicca un altro box.");
-    });
-
-    return;
-  } else {
-    linkingFrom = null;
-
-    if (btnLink)   btnLink.classList.remove("active");
-    if (btnLink_f) btnLink_f.classList.remove("active");
-
-    var b = document.querySelectorAll(".pop");
-    for (var j=0;j<b.length;j++) b[j].classList.remove("linking");
-    setStatus("Pronto");
   }
-}
-      
+
   function setMoveMode(on) {
     moveMode = !!on;
 
     if (moveMode) {
-      setLinkMode(false);
+      // disattivo pan & collega
       setPanMode(false);
-      btnMove.classList.add("active");
+      setLinkMode(false);
+
+      if (btnMove)   btnMove.classList.add("active");
       if (btnMove_f) btnMove_f.classList.add("active");
-      setStatus("Modalita sposta: trascina i box.");
+      setStatus("Modalità sposta: trascina i box.");
     } else {
-      btnMove.classList.remove("active");
+      if (btnMove)   btnMove.classList.remove("active");
       if (btnMove_f) btnMove_f.classList.remove("active");
       setStatus("Pronto");
     }
 
+    // in modalità sposta rendo i textarea readOnly, così il drag funziona ovunque
     var tas = document.querySelectorAll(".pop .body");
     for (var i = 0; i < tas.length; i++) {
       tas[i].readOnly = moveMode;
     }
   }
-  
+
+  function setLinkMode(on) {
+    if (on) {
+      // disattivo pan & move
+      setPanMode(false);
+      setMoveMode(false);
+
+      if (!selectedBoxId) { 
+        setStatus("Seleziona un box prima di collegare."); 
+        return; 
+      }
+
+      linkPreset = linkPreset || { end:"arrow", shape:"straight", curveDir:1 };
+
+      openLinkOptions(function (ok) {
+        if (!ok) { 
+          setStatus("Collegamento annullato."); 
+          return; 
+        }
+
+        linkingFrom = selectedBoxId;
+
+        if (btnLink)   btnLink.classList.add("active");
+        if (btnLink_f) btnLink_f.classList.add("active");
+
+        var a = document.querySelectorAll(".pop");
+        for (var i=0;i<a.length;i++) {
+          a[i].classList.toggle("linking", a[i].dataset.id === linkingFrom);
+        }
+        setStatus("Modalità collega: clicca un altro box.");
+      });
+
+      return;
+    } else {
+      linkingFrom = null;
+
+      if (btnLink)   btnLink.classList.remove("active");
+      if (btnLink_f) btnLink_f.classList.remove("active");
+
+      var b = document.querySelectorAll(".pop");
+      for (var j=0;j<b.length;j++) b[j].classList.remove("linking");
+      setStatus("Pronto");
+    }
+  }
+    
   function autoGrow(ta, popModel) {
     ta.style.height = "auto";
 
