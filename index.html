@@ -3,14 +3,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>m_mentali</title>
+  <title>m_mentale</title>
   <style>
     :root { --bg:#f6f7fb; --grid:rgba(0,0,0,.06); --ink:#1a1a1a; }
 
     html, body { height:100%; margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; color:var(--ink); }
     #app { height:100%; display:grid; grid-template-rows:auto 1fr; }
 
-    /* HEADER con cassetto */
+    /* HEADER con wrapper interno + maniglia */
     header{
       position:sticky;
       top:0;
@@ -28,10 +28,11 @@
       padding:10px 12px;
     }
 
+    /* Maniglia-cassetto ingrandita con frecce */
     .headerHandle{
       width:100%;
-      height:20px;
-      background:rgba(0,0,0,.20);
+      height:20px;                       /* più alta */
+      background:rgba(0,0,0,.18);        /* un po' più visibile */
       cursor:pointer;
       display:flex;
       align-items:center;
@@ -39,7 +40,7 @@
       position:relative;
     }
     .headerHandle::before{
-      content:"▲ ▼";
+      content:"▲ ▼";                     /* frecce su/giù */
       font-size:11px;
       letter-spacing:3px;
       color:#f5f5f5;
@@ -68,6 +69,30 @@
     .btn.danger{ border-color: rgba(200,0,0,.28); }
     .btn.danger:hover{ background: rgba(200,0,0,.06); }
 
+    .hint{ font-size:13px; opacity:.75; flex: 1 1 320px; }
+    kbd{
+      font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+      font-size:12px; border:1px solid rgba(0,0,0,.2); border-bottom-width:2px;
+      padding:1px 6px; border-radius:6px; background:#fafafa;
+    }
+    .status{ font-size:13px; opacity:.9; white-space:nowrap; }
+
+    .textControls{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      font-size:13px;
+      white-space:nowrap;
+    }
+    .textControls input[type="color"]{
+      width:26px;
+      height:26px;
+      padding:0;
+      border-radius:6px;
+      border:1px solid rgba(0,0,0,.18);
+      background:#fff;
+      cursor:pointer;
+    }
     .btn.tiny{
       padding:4px 7px;
       font-size:12px;
@@ -78,27 +103,15 @@
       box-shadow:0 0 0 2px rgba(0,120,255,.22);
     }
 
-    .status{ font-size:13px; opacity:.9; white-space:nowrap; }
-
     #board{
-      position:relative; 
-      overflow:hidden;
+      position:relative; overflow:hidden;
+      touch-action: none;
       background:
         linear-gradient(var(--bg), var(--bg)),
         repeating-linear-gradient(0deg, transparent, transparent 23px, var(--grid) 24px),
         repeating-linear-gradient(90deg, transparent, transparent 23px, var(--grid) 24px);
-      touch-action:none;
     }
-
     #viewport{
-      position:absolute;
-      left:0; top:0;
-      width:100%;
-      height:100%;
-      transform-origin: 0 0;
-    }
-
-    #world{
       position:absolute;
       left:0; top:0;
       width:8000px;
@@ -106,85 +119,86 @@
       transform-origin: 0 0;
     }
 
+    #world{
+      position:absolute;
+      left:0;
+      top:0;
+      width:100%;
+      height:100%;
+      pointer-events:none;
+    }
+
     svg{
       position:absolute; inset:0;
-      width:100%; height:100%;
+      width:100%;
+      height:100%;
+      overflow:visible;
       pointer-events:auto;
     }
 
     .pop{
       position:absolute;
-      min-width:8ch;
-      max-width:48ch;
+      min-width:20ch;
+      max-width:32ch;
       background:#fff;
       border:1px solid rgba(0,0,0,.55);
-      border-radius:999px;
+      border-radius:14px;
       box-shadow:0 8px 24px rgba(0,0,0,.10);
-      padding:8px 12px;
+      padding:6px;
       box-sizing:border-box;
       user-select:none;
       cursor:grab;
-      display:flex;
+      display:inline-flex;
       align-items:center;
       justify-content:center;
       touch-action:none;
+      pointer-events:auto;
     }
+
+    .pop:focus-within{
+      min-width:20ch;
+    }
+
     .pop:active{ cursor:grabbing; }
     .pop.selected{ outline:3px solid rgba(0,120,255,.25); }
     .pop.linking{ background:rgba(0,120,255,.08)!important; border-color:rgba(0,120,255,.35)!important; }
 
     .body{
       width:100%;
+      max-width:none;
       border:0;
       outline:0;
       resize:none;
       overflow-y:auto;
       background:transparent;
       color:inherit;
-      font-size:18px;
-      line-height:1.3;
+      font-size:14px;
+      line-height:1.25;
       padding:0;
       margin:0;
       box-sizing:border-box;
-      min-height:1.4em;
+      min-height:1.25em;
       white-space:pre-wrap;
       word-break:normal;
       text-align:center;
-      font-weight:700;
     }
 
     .body::placeholder{
       color:rgba(0,0,0,.45);
-      font-size:14px;
+      font-size:12px;
       text-align:center;
     }
 
     .linkLine{
       pointer-events:stroke;
+      fill: none;
       cursor:pointer;
       stroke: rgba(0,0,0,.55);
       stroke-width: 2;
       stroke-linecap: round;
-      fill:none;
     }
     .linkLine.selected{
-      stroke: rgba(0,120,255,.85);
       stroke-width: 3;
-    }
-
-    .linkArrow{
-      fill: rgba(0,0,0,.55);
-      pointer-events:none;
-    }
-    .linkLine.selected + .linkArrow{
-      fill: rgba(0,120,255,.85);
-    }
-
-    .linkLabel{
-      font-size:12px;
-      pointer-events:auto;
-      cursor:text;
-      user-select:none;
     }
 
     .ghost{
@@ -329,25 +343,6 @@
     .modal .row{ display:flex; gap:12px; flex-wrap:wrap; margin:10px 0; }
     .modal label{ display:flex; gap:8px; align-items:center; font-size:14px; cursor:pointer; }
     .modal .actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:12px; }
-
-    /* Pulsante doppio Salva rapido / Opzioni salvataggio */
-    .saveSplit{
-      display:inline-flex;
-      flex-direction:column;
-      margin:0 6px;
-    }
-    .saveSplit .btn{
-      padding:4px 10px;
-      font-size:12px;
-      border-radius:0;
-    }
-    .saveSplit .btn.saveTop{
-      border-radius:10px 10px 0 0;
-      border-bottom-width:0;
-    }
-    .saveSplit .btn.saveBottom{
-      border-radius:0 0 10px 10px;
-    }
   </style>
 </head>
 
@@ -362,17 +357,8 @@
       <button class="btn danger" id="btnDelete">Elimina</button>
 
       <button class="btn" id="btnPdf">Stampa in PDF</button>
-
-      <!-- Pulsante doppio Salva rapido / Opzioni salvataggio -->
-      <div class="saveSplit">
-        <button class="btn saveTop" id="btnQuickSave">
-          <span>Salva rapido</span>
-        </button>
-        <button class="btn saveBottom" id="btnSaveOptions">
-          <span>Opzioni salvataggio</span>
-        </button>
-      </div>
-
+      <button class="btn" id="btnExportJson">salva in JSON</button>
+      <button class="btn" id="btnExportHtml">salva in HTML</button>
       <button class="btn" id="btnImport">Importa HTML/JSON</button>
       <input id="fileInput" type="file" accept=".json,.html" style="display:none" />
 
@@ -427,37 +413,6 @@
     </div>
   </div>
 
-  <!-- PANNELLO OPZIONI SALVATAGGIO -->
-  <div class="modalOverlay" id="saveOverlay">
-    <div class="modal">
-      <h3>Opzioni di salvataggio</h3>
-      <div class="row">
-        <label>
-          <input type="radio" name="saveFormat" value="json" checked>
-          JSON (dati della mappa)
-        </label>
-        <label>
-          <input type="radio" name="saveFormat" value="html">
-          HTML (pagina con file incorporato)
-        </label>
-      </div>
-      <div class="row">
-        <label style="flex:1; flex-direction:column; align-items:flex-start;">
-          <span>Nome file:</span>
-          <input type="text" id="saveFileName"
-                 style="width:100%; margin-top:4px; padding:4px 6px; font-size:14px; box-sizing:border-box;">
-        </label>
-      </div>
-      <p style="font-size:12px; opacity:0.8; margin:4px 0 0;">
-        Puoi scrivere il nome senza estensione: verrà aggiunta automaticamente (.json o .html).
-      </p>
-      <div class="actions">
-        <button class="btn tiny" id="btnSaveCancel">Annulla</button>
-        <button class="btn tiny" id="btnSaveConfirm">Salva</button>
-      </div>
-    </div>
-  </div>
-
   <!-- Nuovi controlli flottanti -->
   <div id="controlsLeft">
     <button class="btn" id="btnMove_f">Sposta</button>
@@ -495,15 +450,9 @@
   var btnLink = document.getElementById("btnLink");
   var btnDelete = document.getElementById("btnDelete");
   var btnPdf = document.getElementById("btnPdf");
+  var btnExportJson = document.getElementById("btnExportJson");
+  var btnExportHtml = document.getElementById("btnExportHtml");
   var btnImport = document.getElementById("btnImport");
-
-  // Nuovi pulsanti salvataggio
-  var btnQuickSave    = document.getElementById("btnQuickSave");
-  var btnSaveOptions  = document.getElementById("btnSaveOptions");
-  var saveOverlay     = document.getElementById("saveOverlay");
-  var saveFileNameInp = document.getElementById("saveFileName");
-  var btnSaveCancel   = document.getElementById("btnSaveCancel");
-  var btnSaveConfirm  = document.getElementById("btnSaveConfirm");
   var btnMove = document.getElementById("btnMove");
   var btnPan = document.getElementById("btnPan");
   var btnKeyboardHelp = document.getElementById("btnKeyboardHelp");
@@ -532,10 +481,6 @@
 
   var pops = [];   // {id,x,y,text,color,size,bold,height}
   var links = [];  // {id,from,to,end,shape,curveDir}
-
-  // stato ultimo salvataggio
-  var lastSaveBaseName = "";
-  var lastSaveFormat   = "json";
   var selectedBoxId = null;
   var selectedLinkId = null;
   var linkingFrom = null;
@@ -685,10 +630,164 @@
     renderLinks();
   }
 
+  var linkPreset = { end: "arrow", shape: "straight", curveDir: 1 };
+  var linkModal = null;
+
+  function ensureLinkModal() {
+    if (linkModal) return;
+
+    linkModal = document.createElement("div");
+    linkModal.className = "modalOverlay";
+    linkModal.innerHTML =
+      '<div class="modal" role="dialog" aria-modal="true">' +
+        '<h3>Opzioni collegamento</h3>' +
+        '<div class="row">' +
+          '<label><input type="radio" name="linkEnd" value="none"> Linea semplice</label>' +
+          '<label><input type="radio" name="linkEnd" value="arrow"> Freccia</label>' +
+        '</div>' +
+        '<div class="row">' +
+          '<label><input type="radio" name="linkShape" value="straight"> Retta</label>' +
+          '<label><input type="radio" name="linkShape" value="curve"> Curva</label>' +
+        '</div>' +
+        '<div class="row" data-curve-row>' +
+          '<label><input type="radio" name="curveDir" value="down"> Curva verso il basso</label>' +
+          '<label><input type="radio" name="curveDir" value="up"> Curva verso l\'alto</label>' +
+        '</div>' +
+        '<div class="actions">' +
+          '<button class="btn" id="linkOptCancel">Annulla</button>' +
+          '<button class="btn" id="linkOptOk">OK</button>' +
+        '</div>' +
+      '</div>';
+
+    document.body.appendChild(linkModal);
+
+    var shapeRadios = linkModal.querySelectorAll('input[name="linkShape"]');
+    var curveRadios = linkModal.querySelectorAll('input[name="curveDir"]');
+    var curveLabels = [];
+    curveRadios.forEach(function(r){
+      if (r.parentElement) curveLabels.push(r.parentElement);
+    });
+
+    function updateCurveRadiosDisabled() {
+      var shapeVal = (linkModal.querySelector('input[name="linkShape"]:checked') || {}).value;
+      var disabled = shapeVal !== 'curve';
+
+      curveRadios.forEach(function(r){
+        r.disabled = disabled;
+      });
+      curveLabels.forEach(function(lbl){
+        lbl.style.opacity = disabled ? 0.5 : 1;
+      });
+    }
+
+    shapeRadios.forEach(function(r){
+      r.addEventListener('change', updateCurveRadiosDisabled);
+    });
+
+    linkModal._updateCurveRadiosDisabled = updateCurveRadiosDisabled;
+  }
+
+  function openLinkOptions(done) {
+    ensureLinkModal();
+
+    var endRadio = linkModal.querySelector('input[name="linkEnd"][value="' + linkPreset.end + '"]');
+    var shapeRadio = linkModal.querySelector('input[name="linkShape"][value="' + linkPreset.shape + '"]');
+    if (endRadio) endRadio.checked = true;
+    if (shapeRadio) shapeRadio.checked = true;
+
+    var curveRadioVal = (linkPreset.curveDir === -1) ? "up" : "down";
+    var curveRadio = linkModal.querySelector('input[name="curveDir"][value="' + curveRadioVal + '"]');
+    if (curveRadio) curveRadio.checked = true;
+
+    if (typeof linkModal._updateCurveRadiosDisabled === "function") {
+      linkModal._updateCurveRadiosDisabled();
+    }
+
+    linkModal.style.display = "flex";
+
+    function close() {
+      linkModal.style.display = "none";
+      okBtn.onclick = null;
+      cancelBtn.onclick = null;
+      linkModal.onclick = null;
+    }
+
+    var okBtn = linkModal.querySelector("#linkOptOk");
+    var cancelBtn = linkModal.querySelector("#linkOptCancel");
+
+    okBtn.onclick = function () {
+      var endVal = (linkModal.querySelector('input[name="linkEnd"]:checked') || {}).value || "arrow";
+      var shapeVal = (linkModal.querySelector('input[name="linkShape"]:checked') || {}).value || "straight";
+
+      var curveDir = linkPreset.curveDir || 1;
+      if (shapeVal === "curve") {
+        var curveVal = (linkModal.querySelector('input[name="curveDir"]:checked') || {}).value || "down";
+        curveDir = (curveVal === "up") ? -1 : 1;
+      }
+
+      linkPreset = { end: endVal, shape: shapeVal, curveDir: curveDir };
+      close();
+      done(true);
+    };
+
+    cancelBtn.onclick = function () {
+      close();
+      done(false);
+    };
+
+    linkModal.onclick = function (e) {
+      if (e.target === linkModal) {
+        close();
+        done(false);
+      }
+    };
+  }
+
   function clampToBoard(x, y) {
-    if (x < 8) x = 8;
-    if (y < 8) y = 8;
+    if (x < 0) x = 0;
+    if (y < 0) y = 0;
     return { x:x, y:y };
+  }
+
+  function disableTextControls() {
+    txtColor.disabled = true;
+    btnSizeSmall.disabled = true;
+    btnSizeLarge.disabled = true;
+    btnBold.disabled = true;
+
+    btnSizeSmall.classList.remove("active");
+    btnSizeLarge.classList.remove("active");
+    btnBold.classList.remove("active");
+  }
+
+  function enableTextControlsForPop(p) {
+    txtColor.disabled = false;
+    btnSizeSmall.disabled = false;
+    btnSizeLarge.disabled = false;
+    btnBold.disabled = false;
+
+    if (!p.color) p.color = "#000000";
+    if (!p.size) p.size = "small";
+    if (typeof p.bold === "undefined") p.bold = false;
+
+    txtColor.value = p.color;
+
+    btnSizeSmall.classList.toggle("active", p.size === "small");
+    btnSizeLarge.classList.toggle("active", p.size === "large");
+    btnBold.classList.toggle("active", !!p.bold);
+  }
+
+  function updateTextControls() {
+    if (!selectedBoxId) {
+      disableTextControls();
+      return;
+    }
+    var p = pops.find(function(pp){ return pp.id === selectedBoxId; });
+    if (!p) {
+      disableTextControls();
+      return;
+    }
+    enableTextControlsForPop(p);
   }
 
   function clearSelections() {
@@ -698,6 +797,7 @@
     for (var i=0;i<a.length;i++) a[i].classList.remove("selected");
     var b = document.querySelectorAll(".linkLine");
     for (var j=0;j<b.length;j++) b[j].classList.remove("selected");
+    updateTextControls();
   }
 
   function selectBox(id) {
@@ -715,240 +815,357 @@
   function selectLink(id) {
     selectedLinkId = id;
     selectedBoxId = null;
-    var a = document.querySelectorAll(".pop");
-    for (var i=0;i<a.length;i++) a[i].classList.remove("selected");
-    var b = document.querySelectorAll(".linkLine");
-    for (var j=0;j<b.length;j++) {
-      b[j].classList.toggle("selected", b[j].dataset.id === id);
+    var a = document.querySelectorAll(".linkLine");
+    for (var i=0;i<a.length;i++) {
+      a[i].classList.toggle("selected", a[i].dataset.linkid === id);
     }
+    var b = document.querySelectorAll(".pop");
+    for (var j=0;j<b.length;j++) b[j].classList.remove("selected");
     updateTextControls();
   }
 
-  function deleteSelected() {
-    if (selectedBoxId) {
-      pops = pops.filter(function (p) { return p.id !== selectedBoxId; });
-      links = links.filter(function (l) { return l.from !== selectedBoxId && l.to !== selectedBoxId; });
-      selectedBoxId = null;
-      render();
-      renderLinks();
-      setStatus("Box eliminato");
-      return;
+  function setPanMode(on){
+    panMode = !!on;
+    if (panMode){
+      btnPan.classList.add("active");
+      if (btnPan_f) btnPan_f.classList.add("active");
+      setStatus("Modalità Pan: trascina lo sfondo per spostarti.");
+    } else {
+      btnPan.classList.remove("active");
+      if (btnPan_f) btnPan_f.classList.remove("active");
+      setStatus("Pronto");
     }
+  }
+
+  function setLinkMode(on) {
+    if (on) {
+      if (moveMode) setMoveMode(false);
+      if (panMode) setPanMode(false);
+      if (!selectedBoxId) { setStatus("Seleziona un box prima di collegare."); return; }
+
+      linkPreset = linkPreset || { end:"arrow", shape:"straight", curveDir:1 };
+
+      openLinkOptions(function (ok) {
+        if (!ok) { setStatus("Collegamento annullato."); return; }
+
+        linkingFrom = selectedBoxId;
+        btnLink.classList.add("active");
+        var a = document.querySelectorAll(".pop");
+        for (var i=0;i<a.length;i++) {
+          a[i].classList.toggle("linking", a[i].dataset.id === linkingFrom);
+        }
+        setStatus("Modalita collega: clicca un altro box.");
+      });
+
+      return;
+    } else {
+      linkingFrom = null;
+      btnLink.classList.remove("active");
+      var b = document.querySelectorAll(".pop");
+      for (var j=0;j<b.length;j++) b[j].classList.remove("linking");
+      setStatus("Pronto");
+    }
+  }
+      
+  function setMoveMode(on) {
+    moveMode = !!on;
+
+    if (moveMode) {
+      setLinkMode(false);
+      setPanMode(false);
+      btnMove.classList.add("active");
+      if (btnMove_f) btnMove_f.classList.add("active");
+      setStatus("Modalita sposta: trascina i box.");
+    } else {
+      btnMove.classList.remove("active");
+      if (btnMove_f) btnMove_f.classList.remove("active");
+      setStatus("Pronto");
+    }
+
+    var tas = document.querySelectorAll(".pop .body");
+    for (var i = 0; i < tas.length; i++) {
+      tas[i].readOnly = moveMode;
+    }
+  }
+  
+  function autoGrow(ta, popModel) {
+    ta.style.height = "auto";
+
+    var computed = window.getComputedStyle(ta);
+    var lineH = parseFloat(computed.lineHeight);
+    if (isNaN(lineH)) {
+      lineH = parseFloat(computed.fontSize) * 1.25 || 18;
+    }
+
+    var txt = ta.value || "";
+    var needed;
+
+    if (!txt.trim()) {
+      if (popModel && popModel.bigIntro) {
+        needed = lineH * 4;
+      } else {
+        needed = lineH;
+      }
+    } else {
+      needed = ta.scrollHeight;
+      if (needed < lineH) needed = lineH;
+    }
+
+    if (popModel) {
+      popModel.height = needed;
+    }
+
+    ta.style.height = needed + "px";
+  }
+  
+  function resizeSelectedTextarea() {
+    if (!selectedBoxId) return;
+    var p = pops.find(function(pp){ return pp.id === selectedBoxId; });
+    if (!p) return;
+    var ta = document.querySelector('.pop[data-id="' + selectedBoxId + '"] .body');
+    if (ta) autoGrow(ta, p);
+  }
+
+  function createPop(x, y) {
+    var isFirst = (pops.length === 0);
+
+    var p = {
+      id: uid(),
+      x: x,
+      y: y,
+      text: "",
+      color: "#000000",
+      size: "small",
+      bold: false,
+      height: 0,
+      bigIntro: isFirst
+    };
+
+    pops.push(p);
+    render();
+
+    selectBox(p.id);
+
+    setStatus(
+      "Suggerimento: scrivi un concetto chiave senza articoli o aggettivi (es. SI: Napoleone — NO: il grande Napoleone)."
+    );
+
+    var el = document.querySelector('.pop[data-id="' + p.id + '"] .body');
+    if (el) el.focus();
+  }
+
+  function addLink(from, to, preset) {
+    if (!from || !to || from === to) return;
+    for (var i=0;i<links.length;i++) {
+      if (links[i].from === from && links[i].to === to) return;
+    }
+    var p = preset || linkPreset || { end:"arrow", shape:"straight", curveDir:1 };
+    var curveDir = (typeof p.curveDir === "number") ? p.curveDir : 1;
+    links.push({ id: uid(), from: from, to: to, end: p.end, shape: p.shape, curveDir: curveDir });
+  }
+
+  function deleteSelected() {
     if (selectedLinkId) {
       links = links.filter(function (l) { return l.id !== selectedLinkId; });
       selectedLinkId = null;
       renderLinks();
-      setStatus("Collegamento eliminato");
+      setStatus("Collegamento eliminato.");
       return;
     }
-  }
-
-  function setMoveMode(on) {
-    moveMode = !!on;
-    if (moveMode) {
-      setLinkMode(false);
-      setPanMode(false);
-      setStatus("Modalità Sposta: trascina i POP");
-    } else {
-      setStatus("Pronto");
+    if (selectedBoxId) {
+      var id = selectedBoxId;
+      pops = pops.filter(function (p) { return p.id !== id; });
+      links = links.filter(function (l) { return l.from !== id && l.to !== id; });
+      selectedBoxId = null;
+      if (linkingFrom === id) setLinkMode(false);
+      render();
+      setStatus("Box eliminato.");
+      return;
     }
-    btnMove.classList.toggle("active", moveMode);
-    btnMove_f.classList.toggle("active", moveMode);
+    setStatus("Nessuna selezione.");
   }
 
-  function setPanMode(on) {
-    panMode = !!on;
-    if (panMode) {
-      setMoveMode(false);
-      setLinkMode(false);
-      setStatus("Modalità Pan: trascina lo sfondo");
-    } else {
-      setStatus("Pronto");
-    }
-    btnPan.classList.toggle("active", panMode);
-    btnPan_f.classList.toggle("active", panMode);
-  }
+  function getPopBoxInBoardCoords(id) {
+    var el = document.querySelector('.pop[data-id="'+id+'"]');
+    if (!el) return null;
 
-  function setLinkMode(on) {
-    linkingFrom = on ? linkingFrom : null;
-    btnLink.classList.toggle("active", !!linkingFrom);
-    btnLink_f.classList.toggle("active", !!linkingFrom);
-  }
+    var x = el.offsetLeft;
+    var y = el.offsetTop;
+    var w = el.offsetWidth;
+    var h = el.offsetHeight;
 
-  var linkPreset = { shape:"curve", end:"arrow", curveDir:1 };
-
-  function canLink(fromId, toId) {
-    if (!fromId || !toId || fromId === toId) return false;
-    return !links.some(function(l){ return l.from === fromId && l.to === toId; });
-  }
-
-  function addLink(fromId, toId, preset) {
-    if (!canLink(fromId,toId)) return;
-    var l = {
-      id: uid(),
-      from: fromId,
-      to: toId,
-      end: preset.end || "arrow",
-      shape: preset.shape || "curve",
-      curveDir: preset.curveDir || 1
+    return {
+      cx: x + w/2, cy: y + h/2,
+      hw: w/2, hh: h/2
     };
-    links.push(l);
   }
 
-  function buildPath(from, to, shape, curveDir) {
-    var x1 = from.x + from.w/2;
-    var y1 = from.y + from.h/2;
-    var x2 = to.x   + to.w/2;
-    var y2 = to.y   + to.h/2;
-
-    if (shape === "straight") {
-      return "M" + x1 + "," + y1 + " L" + x2 + "," + y2;
-    }
-
-    var dx = (x2 - x1);
-    var dy = (y2 - y1);
-    var mx = (x1 + x2)/2;
-    var my = (y1 + y2)/2;
-    var nx = -dy;
-    var ny = dx;
-    var norm = Math.hypot(nx,ny) || 1;
-    nx /= norm; ny /= norm;
-
-    var curvature = 0.35;
-    var dist = Math.hypot(dx,dy);
-    var offset = dist * curvature * (curveDir || 1);
-
-    var cx = mx + nx * offset;
-    var cy = my + ny * offset;
-
-    return "M" + x1 + "," + y1 + " Q" + cx + "," + cy + " " + x2 + "," + y2;
-  }
-
-  function buildArrow(from, to, shape, curveDir) {
-    var x1 = from.x + from.w/2;
-    var y1 = from.y + from.h/2;
-    var x2 = to.x   + to.w/2;
-    var y2 = to.y   + to.h/2;
-
-    var dx = x2 - x1;
-    var dy = y2 - y1;
-    var len = Math.hypot(dx,dy) || 1;
-    var ux = dx/len;
-    var uy = dy/len;
-
-    var tipX = x2 - ux*16;
-    var tipY = y2 - uy*16;
-
-    var angle = Math.atan2(dy, dx);
-    var size = 7;
-    var leftX  = tipX - size * Math.cos(angle - Math.PI/6);
-    var leftY  = tipY - size * Math.sin(angle - Math.PI/6);
-    var rightX = tipX - size * Math.cos(angle + Math.PI/6);
-    var rightY = tipY - size * Math.sin(angle + Math.PI/6);
-
-    return "M" + leftX + "," + leftY + " L" + tipX + "," + tipY + " " + rightX + "," + rightY;
-  }
-
-  function updateTextControls() {
-    var hasSelection = !!selectedBoxId;
-    txtColor.disabled = !hasSelection;
-    btnSizeSmall.disabled = !hasSelection;
-    btnSizeLarge.disabled = !hasSelection;
-    btnBold.disabled = !hasSelection;
-
-    if (!hasSelection) {
-      btnBold.classList.remove("active");
-      return;
-    }
-
-    var p = pops.find(function(pp){ return pp.id === selectedBoxId; });
-    if (!p) return;
-
-    txtColor.value = p.color || "#000000";
-    btnBold.classList.toggle("active", !!p.bold);
+  function edgePoint(cx, cy, hw, hh, dx, dy) {
+    if (dx === 0 && dy === 0) return { x: cx, y: cy };
+    var tx = Math.abs(dx) / hw;
+    var ty = Math.abs(dy) / hh;
+    var t = 1 / Math.max(tx, ty);
+    return { x: cx + dx * t, y: cy + dy * t };
   }
 
   function renderLinks() {
-    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    while (svg.firstChild) svg.firstChild.remove();
 
-    var bboxById = {};
-    var popEls = document.querySelectorAll(".pop");
-    for (var i=0;i<popEls.length;i++){
-      var el = popEls[i];
-      var id = el.dataset.id;
-      bboxById[id] = {
-        x: parseFloat(el.style.left) || 0,
-        y: parseFloat(el.style.top) || 0,
-        w: el.offsetWidth,
-        h: el.offsetHeight
-      };
-    }
+    var NS = "http://www.w3.org/2000/svg";
+    var defs = document.createElementNS(NS, "defs");
+    var marker = document.createElementNS(NS, "marker");
+    marker.setAttribute("id", "arrow");
+    marker.setAttribute("viewBox", "0 0 10 10");
+    marker.setAttribute("refX", "9");
+    marker.setAttribute("refY", "5");
+    marker.setAttribute("markerWidth", "7");
+    marker.setAttribute("markerHeight", "7");
+    marker.setAttribute("orient", "auto");
+    marker.setAttribute("markerUnits", "strokeWidth");
 
-    links.forEach(function(l){
-      var from = bboxById[l.from];
-      var to   = bboxById[l.to];
-      if (!from || !to) return;
+    var path = document.createElementNS(NS, "path");
+    path.setAttribute("d", "M 0 0 L 10 5 L 0 10 z");
+    path.setAttribute("fill", "rgba(0,0,0,.55)");
+    marker.appendChild(path);
+    defs.appendChild(marker);
+    svg.appendChild(defs);
 
-      var pathData = buildPath(from,to,l.shape,l.curveDir);
-      var path = document.createElementNS("http://www.w3.org/2000/svg","path");
-      path.setAttribute("d", pathData);
-      path.setAttribute("class","linkLine");
-      path.dataset.id = l.id;
-      if (l.id === selectedLinkId) path.classList.add("selected");
+    links.forEach(function (l) {
+      var A = getPopBoxInBoardCoords(l.from);
+      var B = getPopBoxInBoardCoords(l.to);
+      if (!A || !B) return;
 
-      path.addEventListener("click", function(ev){
-        ev.stopPropagation();
-        selectLink(l.id);
-        setStatus("Collegamento selezionato");
-      });
+      var dx = B.cx - A.cx;
+      var dy = B.cy - A.cy;
 
-      svg.appendChild(path);
+      var p1 = edgePoint(A.cx, A.cy, A.hw, A.hh, dx, dy);
+      var p2 = edgePoint(B.cx, B.cy, B.hw, B.hh, -dx, -dy);
 
-      if (l.end === "arrow") {
-        var arrow = document.createElementNS("http://www.w3.org/2000/svg","path");
-        arrow.setAttribute("d", buildArrow(from,to,l.shape,l.curveDir));
-        arrow.setAttribute("class","linkArrow");
-        svg.appendChild(arrow);
+      var end = l.end || "arrow";
+      var shape = l.shape || "straight";
+
+      var color = "#000000";
+      var toPop = pops.find(function(pp){ return pp.id === l.to; });
+      if (toPop && toPop.color) color = toPop.color;
+
+      var elWire;
+
+      if (shape === "curve") {
+        var mx = (p1.x + p2.x) / 2;
+        var my = (p1.y + p2.y) / 2;
+
+        var len = Math.hypot(dx, dy) || 1;
+        var nx = -dy / len;
+        var ny =  dx / len;
+
+        var offset = Math.min(70, Math.max(20, len / 4));
+        var dir = (typeof l.curveDir === "number") ? l.curveDir : 1;
+        var cx = mx + nx * offset * dir;
+        var cy = my + ny * offset * dir;
+
+        elWire = document.createElementNS(NS, "path");
+        elWire.setAttribute("fill", "none");
+        elWire.setAttribute("d", "M " + p1.x + " " + p1.y + " Q " + cx + " " + cy + " " + p2.x + " " + p2.y);
+      } else {
+        elWire = document.createElementNS(NS, "line");
+        elWire.setAttribute("x1", p1.x);
+        elWire.setAttribute("y1", p1.y);
+        elWire.setAttribute("x2", p2.x);
+        elWire.setAttribute("y2", p2.y);
       }
+
+      if (end === "arrow") {
+        elWire.setAttribute("marker-end", "url(#arrow)");
+      }
+
+      elWire.classList.add("linkLine");
+      elWire.dataset.linkid = l.id;
+      elWire.style.stroke = color;
+
+      if (l.id === selectedLinkId) elWire.classList.add("selected");
+
+      function handlePointerDown(e){
+        e.stopPropagation();
+        setLinkMode(false);
+        selectLink(l.id);
+        setStatus("Collegamento selezionato.");
+      }
+
+      function handleDblClick(e){
+        e.stopPropagation();
+        setLinkMode(false);
+        selectLink(l.id);
+
+        linkPreset = {
+          end: l.end || "arrow",
+          shape: l.shape || "straight",
+          curveDir: (typeof l.curveDir === "number") ? l.curveDir : 1
+        };
+
+        openLinkOptions(function(ok){
+          if (!ok) {
+            setStatus("Modifica collegamento annullata.");
+            return;
+          }
+          l.end = linkPreset.end;
+          l.shape = linkPreset.shape;
+          l.curveDir = linkPreset.curveDir;
+          renderLinks();
+          setStatus("Collegamento aggiornato.");
+        });
+      }
+
+      elWire.addEventListener("pointerdown", handlePointerDown);
+      elWire.addEventListener("dblclick", handleDblClick);
+
+      svg.appendChild(elWire);
     });
   }
 
-  function autoGrow(ta, popModel) {
-    ta.style.height = "auto";
-    ta.style.height = (ta.scrollHeight || 24) + "px";
-    var h = ta.offsetHeight || 24;
-    popModel.height = h + 8;
-    var box = ta.closest(".pop");
-    if (box) {
-      box.style.height = popModel.height + "px";
-    }
-  }
-
   function render() {
-    world.innerHTML = "";
+    var old = world.querySelectorAll(".pop");
+    for (var i=0;i<old.length;i++) old[i].remove();
 
-    pops.forEach(function(p){
+    var ghost = board.querySelector(".ghost");
+    if (ghost) ghost.style.display = pops.length ? "none" : "flex";
+
+    pops.forEach(function (p, idx) {
+      if (!p.color) p.color = "#000000";
+      if (!p.size) p.size = "small";
+      if (typeof p.bold === "undefined") p.bold = false;
+
       var el = document.createElement("div");
       el.className = "pop";
       el.dataset.id = p.id;
       el.style.left = p.x + "px";
       el.style.top  = p.y + "px";
+
       el.style.borderColor = p.color || "#000000";
 
-      var ta = document.createElement("textarea");
-      ta.className = "body";
+      var placeholderAttr = "";
+      if (idx === 0) {
+        placeholderAttr = ' placeholder="Inserisci qui l&#39;argomento della mappa"';
+      }
+
+      el.innerHTML =
+        '<textarea class="body" spellcheck="false" rows="1" cols="6"' + placeholderAttr + '></textarea>';
+
+      var ta = el.querySelector(".body");
       ta.value = p.text || "";
-      ta.style.fontSize   = (p.size === "large" ? "20px" : "18px");
-      ta.style.fontWeight = p.bold ? "700" : "700";
-      ta.style.color      = p.color || "#000000";
-      ta.placeholder = "";
 
-      el.appendChild(ta);
+      var fontSizePx = (p.size === "large") ? "20px" : "14px";
+      ta.style.fontSize = fontSizePx;
+      ta.style.fontWeight = p.bold ? "700" : "400";
+      ta.style.color = p.color || "#000000";
 
-      autoGrow(ta, p);
+      if (typeof p.height === "number" && p.height > 0) {
+        ta.style.height = p.height + "px";
+      } else {
+        autoGrow(ta, p);
+      }
 
       if (p.id === selectedBoxId) el.classList.add("selected");
-      if (linkingFrom === p.id) el.classList.add("linking");
+      if (p.id === linkingFrom) el.classList.add("linking");
 
       ta.addEventListener("focus", function () { selectBox(p.id); });
       ta.addEventListener("mousedown", function (e) {
@@ -1032,23 +1249,14 @@
     setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
   }
 
-  function exportJSON(customBaseName) {
+  function exportJSON() {
     var blob = new Blob([JSON.stringify(getState(), null, 2)], { type: "application/json;charset=utf-8" });
-
-    var filename;
-    if (customBaseName && customBaseName.trim()) {
-      var base = customBaseName.trim();
-      if (!/\.(json)$/i.test(base)) base += ".json";
-      filename = base;
-    } else {
-      filename = "mappa_" + new Date().toISOString().slice(0,19).split(":").join("-") + ".json";
-    }
-
-    downloadBlob(filename, blob);
-    setStatus("Esportato JSON (" + filename + ").");
+    var name = "mappa_" + new Date().toISOString().slice(0,19).split(":").join("-") + ".json";
+    downloadBlob(name, blob);
+    setStatus("Esportato JSON.");
   }
 
-  function exportHTML(customBaseName) {
+  function exportHTML() {
     var state = JSON.stringify(getState(), null, 2);
 
     var html =
@@ -1061,7 +1269,7 @@
       '</head>' +
       '<body>' +
       '<h3>Mappa esportata</h3>' +
-      '<p>Importa questo file nell\\'app con il pulsante Importa.</p>' +
+      '<p>Importa questo file nell\'app con il pulsante Importa.</p>' +
       '<textarea id="popplet_export_data" style="display:none;">' +
       state +
       '</textarea>' +
@@ -1069,18 +1277,9 @@
       '</html>';
 
     var blob = new Blob([html], { type: "text/html;charset=utf-8" });
-
-    var filename;
-    if (customBaseName && customBaseName.trim()) {
-      var base = customBaseName.trim();
-      if (!/\.(html?|htm)$/i.test(base)) base += ".html";
-      filename = base;
-    } else {
-      filename = "mappa_" + new Date().toISOString().slice(0,19).replace(/:/g,'-') + ".html";
-    }
-
-    downloadBlob(filename, blob);
-    setStatus("Esportato HTML (" + filename + ").");
+    var name = "mappa_" + new Date().toISOString().slice(0,19).replace(/:/g,'-') + ".html";
+    downloadBlob(name, blob);
+    setStatus("Esportato HTML.");
   }
   
   function parseImportedText(text) {
@@ -1157,66 +1356,11 @@
   });
 
   btnPdf.addEventListener("click", exportPDF);
+  btnExportJson.addEventListener("click", exportJSON);
+  btnExportHtml.addEventListener("click", exportHTML);
   btnImport.addEventListener("click", doImport);
   btnZoomIn.addEventListener("click", function(){ zoomAroundCenter(1.15); });
   btnZoomOut.addEventListener("click", function(){ zoomAroundCenter(1/1.15); });
-
-  // Apertura pannello Opzioni salvataggio
-  if (btnSaveOptions) {
-    btnSaveOptions.addEventListener("click", function(){
-      if (!saveOverlay) return;
-      if (saveFileNameInp) {
-        saveFileNameInp.value = lastSaveBaseName || "";
-      }
-      var radios = saveOverlay.querySelectorAll('input[name="saveFormat"]');
-      var current = lastSaveFormat || "json";
-      radios.forEach(function(r){ r.checked = (r.value === current); });
-      saveOverlay.style.display = "flex";
-      if (saveFileNameInp) {
-        setTimeout(function(){ saveFileNameInp.focus(); saveFileNameInp.select(); }, 50);
-      }
-    });
-  }
-
-  if (btnSaveCancel && saveOverlay) {
-    btnSaveCancel.addEventListener("click", function(){
-      saveOverlay.style.display = "none";
-    });
-  }
-
-  if (saveOverlay) {
-    saveOverlay.addEventListener("click", function(e){
-      if (e.target === saveOverlay) {
-        saveOverlay.style.display = "none";
-      }
-    });
-  }
-
-  if (btnSaveConfirm && saveOverlay) {
-    btnSaveConfirm.addEventListener("click", function(){
-      var baseName = (saveFileNameInp && saveFileNameInp.value.trim()) || "";
-      if (!baseName) baseName = "mappa_mentale";
-
-      var radios = saveOverlay.querySelectorAll('input[name="saveFormat"]');
-      var chosen = "json";
-      radios.forEach(function(r){ if (r.checked) chosen = r.value; });
-
-      lastSaveBaseName = baseName;
-      lastSaveFormat   = chosen;
-
-      if (chosen === "html") exportHTML(baseName);
-      else exportJSON(baseName);
-
-      saveOverlay.style.display = "none";
-    });
-  }
-
-  if (btnQuickSave) {
-    btnQuickSave.addEventListener("click", function(){
-      if (lastSaveBaseName) exportJSON(lastSaveBaseName);
-      else exportJSON(null);
-    });
-  }
 
   // Collego i pulsanti flottanti alle stesse azioni dei bottoni originali
   if (btnZoomIn_f) {
