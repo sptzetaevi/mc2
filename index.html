@@ -544,6 +544,30 @@
     </div>
   </div>
 
+  <!-- PANNELLO OPZIONI STAMPA -->
+  <div class="modalOverlay" id="printOverlay">
+    <div class="modal">
+      <h3>Stampa mappa</h3>
+      <p style="font-size:14px; line-height:1.4; margin:6px 0 10px;">
+        Verrà stampata solo la <b>mappa mentale</b> visualizzata a schermo.<br>
+        Se l'impaginazione <b>non è corretta</b>, annullare la stampa e <b>usare i tasti in basso a destra</b> (+; -; pan) per centrare la mappa <b>nello schermo</b> prima di riprovare.
+        <br><br>
+        La stampa in PDF produce un file che viene salvato sul PC. Controllare di aver impostato come stampante "Salva come PDF" e non una stampante fisica (es. EPSON ecc.).
+      </p>
+      <div class="row">
+        <label style="font-size:14px;">
+          <input type="radio" name="printScope" value="map" checked>
+          Stampa mappa mentale
+        </label>
+      </div>
+      <div class="actions">
+        <button class="btn tiny" id="btnPrintCancel">Annulla</button>
+        <button class="btn tiny" id="btnPrintConfirm">Vai alla stampa</button>
+      </div>
+    </div>
+  </div>
+
+
   <!-- Nuovi controlli flottanti -->
   <div id="controlsLeft">
     <button class="btn" id="btnMove_f">Sposta</button>
@@ -608,6 +632,10 @@
   var saveFileNameInp = document.getElementById("saveFileName");
   var btnSaveCancel   = document.getElementById("btnSaveCancel");
   var btnSaveConfirm  = document.getElementById("btnSaveConfirm");
+  // Pannello stampa
+  var printOverlay   = document.getElementById("printOverlay");
+  var btnPrintCancel = document.getElementById("btnPrintCancel");
+  var btnPrintConfirm= document.getElementById("btnPrintConfirm");
 
   // stato ultimo salvataggio
   var lastSaveBaseName = "";
@@ -1620,7 +1648,13 @@
     setPanMode(newOn);
   });
 
-  btnPdf.addEventListener("click", exportPDF);
+  btnPdf.addEventListener("click", function(){
+    if (printOverlay) {
+      printOverlay.style.display = "flex";
+    } else {
+      exportPDF();
+    }
+  });
   btnImport.addEventListener("click", doImport);
   btnZoomIn.addEventListener("click", function(){ zoomAroundCenter(1.15); });
   btnZoomOut.addEventListener("click", function(){ zoomAroundCenter(1/1.15); });
@@ -1669,6 +1703,19 @@
       if (e.target === saveOverlay) {
         closeSaveOverlay();
       }
+    });
+  }
+
+  // Gestione pannello stampa
+  if (btnPrintCancel && printOverlay) {
+    btnPrintCancel.addEventListener("click", function(){
+      printOverlay.style.display = "none";
+    });
+  }
+  if (btnPrintConfirm && printOverlay) {
+    btnPrintConfirm.addEventListener("click", function(){
+      printOverlay.style.display = "none";
+      exportPDF();
     });
   }
 
