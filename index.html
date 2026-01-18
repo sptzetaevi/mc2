@@ -2,20 +2,20 @@
 <html lang="it">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>m_concettuali</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>m_mentale</title>
   <style>
     :root {
       --bg:#f6f7fb;
       --grid:rgba(0,0,0,.06);
       --ink:#1a1a1a;
-      --controls-bottom:20px;  /* distanza base dal fondo per i controlli flottanti */
+      --controls-bottom:20px;  /* distanza di base dal fondo per i controlli flottanti */
     }
 
     html, body { height:100%; margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; color:var(--ink); }
-    #app { height:100%; display:grid; grid-template-rows:auto auto 1fr; }
+    #app { height:100%; display:grid; grid-template-rows:auto 1fr; }
 
-    /* HEADER con cassetto */
+    /* HEADER con wrapper interno + maniglia */
     header{
       position:sticky;
       top:0;
@@ -26,12 +26,16 @@
       box-sizing:border-box;
     }
     .headerInner{
+  gap:10px;
+
       display:flex;
       gap:10px;
       flex-wrap:wrap;
       align-items:center;
       padding:10px 12px;
     }
+
+    /* Maniglia-cassetto ingrandita con frecce */
     .rightButtons{
       margin-left:auto;
       display:flex;
@@ -39,11 +43,10 @@
       gap:10px;
     }
 
-    /* Maniglia-cassetto ingrandita con frecce */
     .headerHandle{
       width:100%;
-      height:20px;
-      background:rgba(0,0,0,.18);
+      height:20px;                       /* più alta */
+      background:rgba(0,0,0,.18);        /* un po' più visibile */
       cursor:pointer;
       display:flex;
       align-items:center;
@@ -51,13 +54,16 @@
       position:relative;
     }
     .headerHandle::before{
-      content:"▲ ▼";
+      content:"▲ ▼";                     /* frecce su/giù */
       font-size:11px;
       letter-spacing:3px;
       color:#f5f5f5;
       opacity:0.9;
     }
+
     header.collapsed .headerInner{
+  gap:10px;
+
       display:none;
     }
 
@@ -79,6 +85,35 @@
     .btn.danger{ border-color: rgba(200,0,0,.28); }
     .btn.danger:hover{ background: rgba(200,0,0,.06); }
 
+    .hint{ font-size:13px; opacity:.75; flex: 1 1 320px; }
+    kbd{
+      font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+      font-size:12px; border:1px solid rgba(0,0,0,.2); border-bottom-width:2px;
+      padding:1px 6px; border-radius:6px; background:#fafafa;
+    }
+    .status{ font-size:13px; opacity:.9; white-space:nowrap; flex:1 1 60%; order:90; margin-top:4px; padding:4px 8px; border-radius:6px; background:#e5e5e5; }
+
+    .textControls{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      font-size:13px;
+      white-space:nowrap;
+      flex: 0 0 auto;        /* solo lo spazio necessario */
+      order: 90;             /* stessa riga della status */
+      justify-content:flex-end;
+      margin-top:4px;
+      margin-left:auto;      /* spinge i comandi testo a destra */
+    }
+    .textControls input[type="color"]{
+      width:26px;
+      height:26px;
+      padding:0;
+      border-radius:6px;
+      border:1px solid rgba(0,0,0,.18);
+      background:#fff;
+      cursor:pointer;
+    }
     .btn.tiny{
       padding:4px 7px;
       font-size:12px;
@@ -89,41 +124,15 @@
       box-shadow:0 0 0 2px rgba(0,120,255,.22);
     }
 
-    .status{
-      font-size:13px;
-      opacity:.9;
-      flex: 1 1 100%;
-      order: 99;
-      margin-top: 4px;
-      padding: 4px 8px;
-      border-radius: 8px;
-      background:#f3f4ff;
-      box-sizing:border-box;
-    }
-
-    .focalQuestionTa{
-      width:360px;
-      height:44px;
-      resize:vertical;
-      font-size:13px;
-      padding:8px;
-      margin:10px 12px 0 12px;
-      border:1px solid rgba(0,0,0,.18);
-      border-radius:10px;
-      background:#fff;
-      box-sizing:border-box;
-    }
-
     #board{
       position:relative; overflow:hidden;
+      touch-action: none;
       background:
         linear-gradient(var(--bg), var(--bg)),
         repeating-linear-gradient(0deg, transparent, transparent 23px, var(--grid) 24px),
         repeating-linear-gradient(90deg, transparent, transparent 23px, var(--grid) 24px);
     }
-    #board{ touch-action:none; }
-
-    #world{
+    #viewport{
       position:absolute;
       left:0; top:0;
       width:8000px;
@@ -131,35 +140,53 @@
       transform-origin: 0 0;
     }
 
+    #world{
+      position:absolute;
+      left:0;
+      top:0;
+      width:100%;
+      height:100%;
+      pointer-events:none;
+    }
+
     svg{
       position:absolute; inset:0;
-      width:100%; height:100%;
+      width:100%;
+      height:100%;
+      overflow:visible;
       pointer-events:auto;
     }
 
     .pop{
       position:absolute;
-      min-width:8ch;
-      max-width:48ch;
+      min-width:20ch;
+      max-width:32ch;
       background:#fff;
       border:1px solid rgba(0,0,0,.55);
-      border-radius:10px;
+      border-radius:14px;
       box-shadow:0 8px 24px rgba(0,0,0,.10);
       padding:6px;
       box-sizing:border-box;
       user-select:none;
       cursor:grab;
-      display:flex;
+      display:inline-flex;
       align-items:center;
       justify-content:center;
-      touch-action: none;
+      touch-action:none;
+      pointer-events:auto;
     }
+
+    .pop:focus-within{
+      min-width:20ch;
+    }
+
     .pop:active{ cursor:grabbing; }
     .pop.selected{ outline:3px solid rgba(0,120,255,.25); }
     .pop.linking{ background:rgba(0,120,255,.08)!important; border-color:rgba(0,120,255,.35)!important; }
 
     .body{
       width:100%;
+      max-width:none;
       border:0;
       outline:0;
       resize:none;
@@ -177,7 +204,6 @@
       text-align:center;
     }
 
-    /* stile del placeholder dentro il POP */
     .body::placeholder{
       color:rgba(0,0,0,.45);
       font-size:12px;
@@ -186,13 +212,13 @@
 
     .linkLine{
       pointer-events:stroke;
+      fill: none;
       cursor:pointer;
       stroke: rgba(0,0,0,.55);
       stroke-width: 2;
       stroke-linecap: round;
     }
     .linkLine.selected{
-      stroke: rgba(0,120,255,.85);
       stroke-width: 3;
     }
 
@@ -202,17 +228,7 @@
       font-size:14px; opacity:.55;
     }
 
-    
-    /* Selezione area di stampa */
-    #printSelectionBox{
-      position:absolute;
-      border:2px dashed rgba(0,120,255,.9);
-      background:rgba(0,120,255,.12);
-      pointer-events:none;
-      display:none;
-      z-index:20;
-    }
-/* Controlli flottanti in basso a destra/sinistra */
+    /* Controlli flottanti in basso a destra/sinistra */
     #controlsRight {
       position: fixed;
       bottom: var(--controls-bottom);
@@ -221,7 +237,7 @@
       flex-direction: column;
       gap: 8px;
       z-index: 999;
-      pointer-events:none; /* i click passano sotto, tranne sui bottoni */
+      pointer-events:none;
     }
 
     #controlsLeft {
@@ -262,7 +278,8 @@
       box-shadow: 0 0 0 3px rgba(0,120,255,.25);
     }
 
-    /* Nascondo i bottoni originali nell'header, ma li tengo nel DOM per riusare la logica JS */
+    /* Nascondo i bottoni originali nel header,
+       ma li tengo nel DOM per riusare tutta la logica JS */
     #btnZoomIn,
     #btnZoomOut,
     #btnPan,
@@ -272,21 +289,11 @@
     }
 
     @media print {
-      header, #mainHeader, .headerInner, .headerHandle, .rightButtons { display:none !important; }
+      header { display:none !important; }
       .ghost { display:none !important; }
-      #controlsLeft, #controlsRight { display:none !important; }
-      .modalOverlay { display:none !important; }
 
       html, body { height: 100% !important; }
       #app { height: 100% !important; }
-
-      #board{ touch-action:none; }
-
-      #world{
-        position:absolute;
-        inset:0;
-        transform-origin: 0 0;
-      }
 
       #board {
         background:#fff !important;
@@ -304,31 +311,12 @@
       }
     }
 
-    @media print {
-      .focalQuestionTa{
-        display: block !important;
-        position: static !important;
-        width: 100%;
-        margin: 0 0 12mm 0;
-        border: none !important;
-        outline: none !important;
-        resize: none !important;
-        font-size: 16pt;
-        font-weight: 600;
-        line-height: 1.3;
-        background: transparent !important;
-        color: #000;
-        white-space: pre-wrap;
-      }
-    }
-
-    #mapTitle { font-weight:800; letter-spacing:2px; user-select:none; margin-left:8px; flex:1 1 auto; }
+    #mapTitle { font-weight:800; letter-spacing:2px; user-select:none; margin-left:6px; flex:0 0 auto; }
     #mapTitle .mapWord { font-size:16px; }
     #mapTitle .mentalWord { font-size:22px; }
 
-    /* --- LOGO/LINK ALLA HOME ANTIMAPPIFICIO --- */
     .homeLogo{
-      margin-left: 0;
+      margin-left: 10px;
       text-decoration: none;
     }
     .homeLogo .logoLetters{
@@ -353,7 +341,7 @@
       border-color: rgba(0,120,255,.6);
     }
 
-    /* POPUP COMANDI / SALVATAGGIO */
+    /* POPUP generici */
     .modalOverlay{
       position:fixed; inset:0;
       background:rgba(0,0,0,.35);
@@ -371,11 +359,11 @@
       padding:14px;
     }
     .modal h3{ margin:0 0 10px 0; font-size:16px; }
+    .modal .row{ display:flex; gap:12px; flex-wrap:wrap; margin:10px 0; }
+    .modal label{ display:flex; gap:8px; align-items:center; font-size:14px; cursor:pointer; }
     .modal .actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:12px; }
-    .modal .row{ display:flex; flex-wrap:wrap; gap:10px; margin:8px 0; }
-    .modal .row label{ display:flex; align-items:center; gap:6px; font-size:14px; }
-
-    /* Pulsante doppio Salva  / Salva con nome */
+  
+    /* Pulsante triplo Salva rapido / Opzioni salvataggio / Importa */
     .tripleSplit{
       display:inline-flex;
       flex-direction:row;
@@ -391,83 +379,133 @@
     }
     .tripleSplit .btn.tripleCenter{
       border-radius:0;
-      border-left-width:0;
-      border-right-width:0;
+      border-left:1px solid rgba(0,0,0,.18);
+      border-right:1px solid rgba(0,0,0,.18);
     }
     .tripleSplit .btn.tripleRight{
       border-radius:0 10px 10px 0;
-      border-left-width:0;
+      border-left:1px solid rgba(0,0,0,.18);
     }
 
-  </style>
+    
+/* Ottimizzazioni base per schermi piccoli */
+    @media (max-width: 768px) {
+  .headerInner {
+    padding:6px 8px;
+    flex-wrap:wrap;
+  }
+
+  #mapTitle {
+    font-size:20px;
+    font-weight:800;
+    letter-spacing:2px;
+    user-select:none;
+    margin-left:6px;
+    flex:1 1 100%;
+  }
+
+  .status{
+    font-size:13px;
+    opacity:.9;
+    white-space:normal;
+    flex:1 1 100%;
+    order:90;
+    margin-top:4px;
+    padding:4px 8px;
+    border-radius:6px;
+    background:#e5e5e5;
+  }
+
+  .textControls {
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    flex:1 1 100%;
+    justify-content:flex-start;
+    margin-top:4px;
+  }
+
+  .btn {
+    font-size:12px;
+    padding:5px 7px;
+    white-space:nowrap;
+  }
+
+  .pop {
+    max-width: 28ch;
+  }
+}
+</style>
 </head>
 
 <body>
 <div id="app">
-
+    
   <header id="mainHeader">
     <div class="headerInner">
       <!-- Logo prima -->
-      <a class="homeLogo"
+      <a
+         class="homeLogo"
          href="https://sptzetaevi.github.io/antimappificio/"
          title="Torna alla pagina principale ANTIMAPPIFICIO">
         <span class="logoLetters">A&nbsp;M</span>
       </a>
 
       <!-- Titolo subito dopo il logo -->
-      <span id="mapTitle"><span class="mapWord">MAPPA</span> <span class="mentalWord">CONCETTUALE</span></span>
+      <span id="mapTitle"><span class="mapWord">MAPPA</span> <span class="mentalWord">MENTALE</span></span>
 
       <!-- Tutti gli altri tasti -->
-      <div class="rightButtons">
-        <button class="btn" id="btnNew">+ Nuovo pop</button>
-        <button class="btn" id="btnMove">Sposta</button>
-        <button class="btn" id="btnLink">Collega</button>
-        <button class="btn danger" id="btnDelete">Elimina</button>
+      <div class="rightButtons"><button class="btn" id="btnNew" >+ Nuovo pop</button>
+      <button class="btn" id="btnMove">Sposta</button>
+      <button class="btn" id="btnLink">Collega</button>
+      <button class="btn danger" id="btnDelete">Elimina</button>
 
-        <button class="btn" id="btnPdf">Stampa in PDF</button>
+      <button class="btn" id="btnPdf">Stampa in PDF</button>
 
-        <!-- Pulsante doppio SALVATAGGIO -->
-        <div class="tripleSplit">
-          <button class="btn tripleLeft" id="btnQuickSave">
-            <span>Salva </span>
-          </button>
-          <button class="btn tripleCenter" id="btnSaveOptions">
-            <span>Salva con nome</span>
-          </button>
-          <button class="btn tripleRight" id="btnImport">
-            <span>Apri...</span>
-          </button>
-        </div>
-
-        
-        <input id="fileInput" type="file" accept=".json,.html" style="display:none" />
-
-        <button class="btn tiny" id="btnZoomIn">+</button>
-        <button class="btn tiny" id="btnZoomOut">-</button>
-        <button class="btn tiny" id="btnPan" title="Pan vista">
-          <span aria-hidden="true">✋</span>
+      <!-- Pulsante triplo compatto orizzontale: Salva rapido / Opzioni salvataggio / Importa -->
+      <div class="tripleSplit">
+        <button class="btn tripleLeft" id="btnQuickSave">
+          <span>Salva</span>
         </button>
-        <button class="btn tiny" id="btnKeyboardHelp">Info e comandi</button>
+        <button class="btn tripleCenter" id="btnSaveOptions">
+          <span>Salva con nome</span>
+        </button>
+        <button class="btn tripleRight" id="btnImport">
+          <span>Apri…</span>
+        </button>
       </div>
 
-      <!-- Riga di stato come "seconda linea" -->
+      <input id="fileInput" type="file" accept=".json,.html" style="display:none" />
+
+      <button class="btn tiny" id="btnZoomIn">+</button>
+      <button class="btn tiny" id="btnZoomOut">-</button>
+      <button class="btn tiny" id="btnPan" title="Pan vista">
+        <span aria-hidden="true">✋</span>
+      </button>
+      <button class="btn tiny" id="btnKeyboardHelp">Info e comandi</button>
+
+      <!-- Seconda riga: suggerimenti + comandi testo a destra -->
+      </div>
       <span class="status" id="status">Avvio...</span>
+
+      <div class="textControls">
+        <span>Formato:</span>
+        <input type="color" id="txtColor" value="#000000" disabled>
+        <button class="btn tiny" id="btnSizeSmall" disabled>-</button>
+        <button class="btn tiny" id="btnSizeLarge" disabled>+</button>
+        <button class="btn tiny" id="btnBold" disabled><b>B</b></button>
+      </div>
     </div>
+
     <div class="headerHandle" id="headerHandle" title="Mostra/nascondi strumenti"></div>
   </header>
 
-  <!-- Box domanda focale -->
-  <textarea
-    id="focalQuestion"
-    class="focalQuestionTa"
-    placeholder="Inserisci qui la tua domanda focale"
-  ></textarea>
-
   <div id="board">
-    <div id="world">
+    <div id="viewport">
       <svg id="wires"></svg>
+      <div id="world"></div>
     </div>
-        <div id="printSelectionBox"></div>
+
     <div class="ghost">Doppio click sullo sfondo per creare un pop</div>
   </div>
 
@@ -476,13 +514,8 @@
     <div class="modal">
       <h3>Info e comandi</h3>
       <p style="font-size:14px; line-height:1.4; margin:6px 0 10px;">
-        • Doppio click sullo sfondo = crea box<br>
-        • Modalità Pan attiva + trascina sfondo = sposta vista<br>
-        • Click su un box = seleziona box<br>
-        • Click su una linea = seleziona collegamento (per eliminarlo)<br>
-        • Click sull’etichetta di una linea = modifica testo dell’etichetta<br>
-        • <kbd>CANC</kbd>/Elimina = elimina box o collegamento selezionato<br>
-        • <kbd>ESC</kbd> = annulla modalità collega
+        Doppio click = crea box • Trascina sfondo in modalità Pan = sposta vista • click linea = seleziona (per eliminare) •
+        doppio click linea = modifica • <kbd>CANC</kbd>/Elimina = elimina • <kbd>ESC</kbd> = annulla collega
       </p>
       <div class="actions">
         <button class="btn tiny" id="btnKbdClose">Chiudi</button>
@@ -490,14 +523,14 @@
     </div>
   </div>
 
-  <!-- PANNELLO Salva con nome -->
+  <!-- PANNELLO OPZIONI SALVATAGGIO -->
   <div class="modalOverlay" id="saveOverlay">
     <div class="modal">
       <h3>Opzioni di salvataggio</h3>
       <div class="row">
         <label>
           <input type="radio" name="saveFormat" value="json" checked>
-          JSON (salva un file che potrai re-importare per modificare)
+         JSON (salva un file che potrai re-importare per modificare)
         </label>
         <label>
           <input type="radio" name="saveFormat" value="html">
@@ -520,20 +553,21 @@
       </div>
     </div>
   </div>
+
   <!-- PANNELLO OPZIONI STAMPA -->
   <div class="modalOverlay" id="printOverlay">
     <div class="modal">
       <h3>Stampa mappa</h3>
       <p style="font-size:14px; line-height:1.4; margin:6px 0 10px;">
-        Verrà stampata solo la <b>mappa</b> con la <b>domanda focale</b> in testa.<br>
-        Se l'impaginazione <b>non è corretta</b>, annullare stampa e  <b>usare i tasti in basso a destra</b> (+;-;pan) per centrare la mappa  <b>nello schermo</b>.
-        
-        La stampa in pdf, produce una file che viene salvato sul PC. Controllare di aver impostato come stampante "Salva come PDF" e non stampanti fisiche (es. EPSON ECC..)
+        Verrà stampata solo la <b>mappa mentale</b> visualizzata a schermo.<br>
+        Se l'impaginazione <b>non è corretta</b>, annullare la stampa e <b>usare i tasti in basso a destra</b> (+; -; pan) per centrare la mappa <b>nello schermo</b> prima di riprovare.
+        <br><br>
+        La stampa in PDF produce un file che viene salvato sul PC. Controllare di aver impostato come stampante "Salva come PDF" e non una stampante fisica (es. EPSON ecc.).
       </p>
       <div class="row">
         <label style="font-size:14px;">
           <input type="radio" name="printScope" value="map" checked>
-          Stampa mappa concettuale e domanda focale
+          Stampa mappa mentale
         </label>
       </div>
       <div class="actions">
@@ -544,7 +578,7 @@
   </div>
 
 
-  <!-- Nuovi controlli flottanti fissi in basso -->
+  <!-- Nuovi controlli flottanti -->
   <div id="controlsLeft">
     <button class="btn" id="btnMove_f">Sposta</button>
     <button class="btn" id="btnLink_f">Collega</button>
@@ -556,13 +590,15 @@
     <button class="btn tiny" id="btnPan_f" title="Pan vista">✋</button>
   </div>
 
+</div>
+
 <script>
 (function () {
   var board = document.getElementById("board");
   var svg = document.getElementById("wires");
+  var viewport = document.getElementById("viewport");
   var world = document.getElementById("world");
   var statusEl = document.getElementById("status");
-  var focalTa = document.getElementById("focalQuestion");
 
   var header = document.getElementById("mainHeader");
   var headerHandle = document.getElementById("headerHandle");
@@ -579,6 +615,8 @@
   var btnLink = document.getElementById("btnLink");
   var btnDelete = document.getElementById("btnDelete");
   var btnPdf = document.getElementById("btnPdf");
+  var btnExportJson = document.getElementById("btnExportJson");
+  var btnExportHtml = document.getElementById("btnExportHtml");
   var btnImport = document.getElementById("btnImport");
   var btnMove = document.getElementById("btnMove");
   var btnPan = document.getElementById("btnPan");
@@ -589,10 +627,11 @@
   var btnZoomIn = document.getElementById("btnZoomIn");
   var btnZoomOut = document.getElementById("btnZoomOut");
 
-  // Bottoni flottanti in basso
+  // bottoni flottanti in basso
   var btnZoomIn_f  = document.getElementById("btnZoomIn_f");
   var btnZoomOut_f = document.getElementById("btnZoomOut_f");
   var btnPan_f     = document.getElementById("btnPan_f");
+
   var btnMove_f    = document.getElementById("btnMove_f");
   var btnLink_f    = document.getElementById("btnLink_f");
 
@@ -612,80 +651,385 @@
   var lastSaveBaseName = "";
   var lastSaveFormat   = "json";
 
-  function setStatus(msg){ statusEl.textContent = msg; }
+  var txtColor = document.getElementById("txtColor");
+  var btnSizeSmall = document.getElementById("btnSizeSmall");
+  var btnSizeLarge = document.getElementById("btnSizeLarge");
+  var btnBold = document.getElementById("btnBold");
+
+  function setStatus(msg){ if(statusEl) statusEl.textContent = msg; }
   function uid(){ return Math.random().toString(36).slice(2, 10); }
   function boardRect(){ return board.getBoundingClientRect(); }
 
-  var pops = [];   // {id,x,y,text,height,bigIntro}
-  var links = [];  // {id,from,to,label}
+  var pops = [];   // {id,x,y,text,color,size,borderColor,borderSize,bold,height}
+  var links = [];  // {id,from,to,end,shape,curveDir}
   var selectedBoxId = null;
+  var selectedBoxPart = null; // "text" o "border"
   var selectedLinkId = null;
   var linkingFrom = null;
   var moveMode = false;
   var panMode = false;
-  var focalQuestion = "";
-  var MAX_PLACEHOLDER_POPS = 1;
 
-  var camX = 0;
-  var camY = 0;
-  var camS = 1;
+  var view = { x: 0, y: 0, s: 1 };
 
-  var MAX_PLACEHOLDER_POPS = 1;
-
-  // Messaggio con suggerimento per il verbo del collegamento
-  var linkLabelPromptMsg =
-    "Etichetta del collegamento:\n\n" +
-    "Scrivi qui un verbo che collega i due concetti.\n" +
-    "Nelle mappe concettuali il verbo dovrebbe essere all’indicativo presente (es. considera, organizza, diventa...).";
-
-  function applyCamera(){
-    world.style.transform = "translate(" + camX + "px," + camY + "px) scale(" + camS + ")";
+  function clampScale(s){
+    return Math.max(0.35, Math.min(2.8, s));
   }
-  applyCamera();
+
+  function applyView(){
+    viewport.style.transform = "translate(" + view.x + "px," + view.y + "px) scale(" + view.s + ")";
+  }
 
   function screenToWorld(clientX, clientY){
-    var r = boardRect();
-    return {
-      x: (clientX - r.left - camX) / camS,
-      y: (clientY - r.top  - camY) / camS
-    };
+    var br = board.getBoundingClientRect();
+    var sx = clientX - br.left;
+    var sy = clientY - br.top;
+    return { x: (sx - view.x)/view.s, y: (sy - view.y)/view.s };
   }
 
+  applyView();
+
+  var pointers = new Map();
+  var panState = null;
+  var pinchState = null;
+
+  function dist(a,b){
+    var dx=a.x-b.x, dy=a.y-b.y;
+    return Math.hypot(dx,dy);
+  }
+
+  board.addEventListener("pointerdown", function(e){
+    if (e.target.closest(".pop")) return;
+
+    board.setPointerCapture(e.pointerId);
+    pointers.set(e.pointerId, {x:e.clientX, y:e.clientY});
+
+    if (pointers.size === 1){
+      if (!panMode) {
+        panState = null;
+        return;
+      }
+      panState = { startX:view.x, startY:view.y, p0:{x:e.clientX,y:e.clientY} };
+      pinchState = null;
+    }
+
+    if (pointers.size === 2){
+      var arr = Array.from(pointers.values());
+      var pA = arr[0], pB = arr[1];
+      var mid = { x:(pA.x+pB.x)/2, y:(pA.y+pB.y)/2 };
+      var wMid = screenToWorld(mid.x, mid.y);
+
+      pinchState = {
+        startS: view.s,
+        startD: dist(pA,pB),
+        midScreen: mid,
+        midWorld: wMid
+      };
+      panState = null;
+    }
+  });
+
+  board.addEventListener("pointermove", function(e){
+    if (!pointers.has(e.pointerId)) return;
+    pointers.set(e.pointerId, {x:e.clientX, y:e.clientY});
+
+    if (pinchState && pointers.size >= 2){
+      var arr = Array.from(pointers.values());
+      var pA = arr[0], pB = arr[1];
+      var d = dist(pA,pB);
+      view.s = clampScale(pinchState.startS * (d / pinchState.startD));
+
+      var br = board.getBoundingClientRect();
+      var midSx = pinchState.midScreen.x - br.left;
+      var midSy = pinchState.midScreen.y - br.top;
+
+      view.x = midSx - pinchState.midWorld.x * view.s;
+      view.y = midSy - pinchState.midWorld.y * view.s;
+
+      applyView();
+      renderLinks();
+      return;
+    }
+
+    if (pointers.size === 1 && panState){
+      var dx = e.clientX - panState.p0.x;
+      var dy = e.clientY - panState.p0.y;
+      view.x = panState.startX + dx;
+      view.y = panState.startY + dy;
+      applyView();
+      renderLinks();
+    }
+  });
+
+  board.addEventListener("pointerup", function(e){
+    pointers.delete(e.pointerId);
+    if (pointers.size === 0){
+      panState = null;
+      pinchState = null;
+    }
+  });
+
+  board.addEventListener("pointercancel", function(){
+    pointers.clear();
+    panState = null;
+    pinchState = null;
+  });
+
+  board.addEventListener("wheel", function(e){
+    if (!e.ctrlKey) return;
+    e.preventDefault();
+
+    var before = screenToWorld(e.clientX, e.clientY);
+    var factor = (e.deltaY < 0) ? 1.08 : 0.92;
+    view.s = clampScale(view.s * factor);
+
+    var br = board.getBoundingClientRect();
+    var sx = e.clientX - br.left;
+    var sy = e.clientY - br.top;
+
+    view.x = sx - before.x * view.s;
+    view.y = sy - before.y * view.s;
+
+    applyView();
+    renderLinks();
+  }, { passive:false });
+
+
   function zoomAroundCenter(factor){
-    var r = boardRect();
-    var cx = r.left + r.width / 2;
-    var cy = r.top  + r.height / 2;
+    var br = board.getBoundingClientRect();
+    var cx = br.left + br.width/2;
+    var cy = br.top + br.height/2;
+    var before = screenToWorld(cx, cy);
 
-    var wBefore = screenToWorld(cx, cy);
+    view.s = clampScale(view.s * factor);
 
-    var newS = camS * factor;
-    if (newS < 0.25) newS = 0.25;
-    if (newS > 4.0) newS = 4.0;
-    camS = newS;
+    var sx = cx - br.left;
+    var sy = cy - br.top;
 
-    var sx = cx - r.left;
-    var sy = cy - r.top;
+    view.x = sx - before.x * view.s;
+    view.y = sy - before.y * view.s;
 
-    camX = sx - wBefore.x * camS;
-    camY = sy - wBefore.y * camS;
-
-    applyCamera();
+    applyView();
     renderLinks();
   }
 
+  var linkPreset = { end: "arrow", shape: "straight", curveDir: 1 };
+  var linkModal = null;
+
+  function ensureLinkModal() {
+    if (linkModal) return;
+
+    linkModal = document.createElement("div");
+    linkModal.className = "modalOverlay";
+    linkModal.innerHTML =
+      '<div class="modal" role="dialog" aria-modal="true">' +
+        '<h3>Opzioni collegamento</h3>' +
+        '<div class="row">' +
+          '<label><input type="radio" name="linkEnd" value="none"> Linea semplice</label>' +
+          '<label><input type="radio" name="linkEnd" value="arrow"> Freccia</label>' +
+        '</div>' +
+        '<div class="row">' +
+          '<label><input type="radio" name="linkShape" value="straight"> Retta</label>' +
+          '<label><input type="radio" name="linkShape" value="curve"> Curva</label>' +
+        '</div>' +
+        '<div class="row" data-curve-row>' +
+          '<label><input type="radio" name="curveDir" value="down"> Curva verso il basso</label>' +
+          '<label><input type="radio" name="curveDir" value="up"> Curva verso l\'alto</label>' +
+        '</div>' +
+        '<div class="actions">' +
+          '<button class="btn" id="linkOptCancel">Annulla</button>' +
+          '<button class="btn" id="linkOptOk">OK</button>' +
+        '</div>' +
+      '</div>';
+
+    document.body.appendChild(linkModal);
+
+    var shapeRadios = linkModal.querySelectorAll('input[name="linkShape"]');
+    var curveRadios = linkModal.querySelectorAll('input[name="curveDir"]');
+    var curveLabels = [];
+    curveRadios.forEach(function(r){
+      if (r.parentElement) curveLabels.push(r.parentElement);
+    });
+
+    function updateCurveRadiosDisabled() {
+      var shapeVal = (linkModal.querySelector('input[name="linkShape"]:checked') || {}).value;
+      var disabled = shapeVal !== 'curve';
+
+      curveRadios.forEach(function(r){
+        r.disabled = disabled;
+      });
+      curveLabels.forEach(function(lbl){
+        lbl.style.opacity = disabled ? 0.5 : 1;
+      });
+    }
+
+    shapeRadios.forEach(function(r){
+      r.addEventListener('change', updateCurveRadiosDisabled);
+    });
+
+    linkModal._updateCurveRadiosDisabled = updateCurveRadiosDisabled;
+  }
+
+  function openLinkOptions(done) {
+    ensureLinkModal();
+
+    var endRadio = linkModal.querySelector('input[name="linkEnd"][value="' + linkPreset.end + '"]');
+    var shapeRadio = linkModal.querySelector('input[name="linkShape"][value="' + linkPreset.shape + '"]');
+    if (endRadio) endRadio.checked = true;
+    if (shapeRadio) shapeRadio.checked = true;
+
+    var curveRadioVal = (linkPreset.curveDir === -1) ? "up" : "down";
+    var curveRadio = linkModal.querySelector('input[name="curveDir"][value="' + curveRadioVal + '"]');
+    if (curveRadio) curveRadio.checked = true;
+
+    if (typeof linkModal._updateCurveRadiosDisabled === "function") {
+      linkModal._updateCurveRadiosDisabled();
+    }
+
+    linkModal.style.display = "flex";
+
+    function close() {
+      linkModal.style.display = "none";
+      okBtn.onclick = null;
+      cancelBtn.onclick = null;
+      linkModal.onclick = null;
+    }
+
+    var okBtn = linkModal.querySelector("#linkOptOk");
+    var cancelBtn = linkModal.querySelector("#linkOptCancel");
+
+    okBtn.onclick = function () {
+      var endVal = (linkModal.querySelector('input[name="linkEnd"]:checked') || {}).value || "arrow";
+      var shapeVal = (linkModal.querySelector('input[name="linkShape"]:checked') || {}).value || "straight";
+
+      var curveDir = linkPreset.curveDir || 1;
+      if (shapeVal === "curve") {
+        var curveVal = (linkModal.querySelector('input[name="curveDir"]:checked') || {}).value || "down";
+        curveDir = (curveVal === "up") ? -1 : 1;
+      }
+
+      linkPreset = { end: endVal, shape: shapeVal, curveDir: curveDir };
+      close();
+      done(true);
+    };
+
+    cancelBtn.onclick = function () {
+      close();
+      done(false);
+    };
+
+    linkModal.onclick = function (e) {
+      if (e.target === linkModal) {
+        close();
+        done(false);
+      }
+    };
+  }
+
   function clampToBoard(x, y) {
-    if (x < 8) x = 8;
-    if (y < 8) y = 8;
+    if (x < 0) x = 0;
+    if (y < 0) y = 0;
     return { x:x, y:y };
+  }
+
+  function disableTextControls() {
+    txtColor.disabled = true;
+    btnSizeSmall.disabled = true;
+    btnSizeLarge.disabled = true;
+    btnBold.disabled = true;
+
+    btnSizeSmall.classList.remove("active");
+    btnSizeLarge.classList.remove("active");
+    btnBold.classList.remove("active");
+  }
+
+  function enableTextControlsForText(p) {
+    txtColor.disabled = false;
+    btnSizeSmall.disabled = false;
+    btnSizeLarge.disabled = false;
+    btnBold.disabled = false;
+
+    if (!p.color) p.color = "#000000";
+    if (!p.size) p.size = "medium";
+    if (typeof p.bold === "undefined") p.bold = false;
+
+    txtColor.value = p.color;
+
+    btnSizeSmall.classList.toggle("active", p.size === "small");
+    btnSizeLarge.classList.toggle("active", p.size === "large");
+    btnBold.classList.toggle("active", !!p.bold);
+  }
+
+  function enableTextControlsForBorder(p) {
+    txtColor.disabled = false;
+    btnSizeSmall.disabled = false;
+    btnSizeLarge.disabled = false;
+    btnBold.disabled = true;
+
+    if (!p.borderColor) p.borderColor = p.color || "#000000";
+    if (!p.borderSize) p.borderSize = "thin";
+
+    txtColor.value = p.borderColor;
+
+    btnSizeSmall.classList.remove("active");
+    btnSizeLarge.classList.remove("active");
+    if (p.borderSize === "thin") {
+      btnSizeSmall.classList.add("active");
+    } else if (p.borderSize === "thick") {
+      btnSizeLarge.classList.add("active");
+    }
+  }
+
+  function enableTextControlsForLink(l) {
+    // Per i collegamenti abilitiamo solo il colore
+    txtColor.disabled = false;
+    btnSizeSmall.disabled = true;
+    btnSizeLarge.disabled = true;
+    btnBold.disabled = true;
+
+    btnSizeSmall.classList.remove("active");
+    btnSizeLarge.classList.remove("active");
+    btnBold.classList.remove("active");
+
+    txtColor.value = l.color || "#000000";
+  }
+
+  function updateTextControls() {
+    if (selectedBoxId) {
+      var p = pops.find(function(pp){ return pp.id === selectedBoxId; });
+      if (!p) {
+        disableTextControls();
+        return;
+      }
+      if (selectedBoxPart === "border") {
+        enableTextControlsForBorder(p);
+      } else {
+        enableTextControlsForText(p);
+      }
+      return;
+    }
+
+    if (selectedLinkId) {
+      var l = links.find(function(ll){ return ll.id === selectedLinkId; });
+      if (!l) {
+        disableTextControls();
+        return;
+      }
+      enableTextControlsForLink(l);
+      return;
+    }
+
+    disableTextControls();
   }
 
   function clearSelections() {
     selectedBoxId = null;
+    selectedBoxPart = null;
     selectedLinkId = null;
     var a = document.querySelectorAll(".pop");
     for (var i=0;i<a.length;i++) a[i].classList.remove("selected");
     var b = document.querySelectorAll(".linkLine");
     for (var j=0;j<b.length;j++) b[j].classList.remove("selected");
+    updateTextControls();
   }
 
   function selectBox(id) {
@@ -697,17 +1041,33 @@
     }
     var b = document.querySelectorAll(".linkLine");
     for (var j=0;j<b.length;j++) b[j].classList.remove("selected");
+    updateTextControls();
   }
 
   function selectLink(id) {
     selectedLinkId = id;
     selectedBoxId = null;
+    selectedBoxPart = null;
     var a = document.querySelectorAll(".linkLine");
     for (var i=0;i<a.length;i++) {
       a[i].classList.toggle("selected", a[i].dataset.linkid === id);
     }
     var b = document.querySelectorAll(".pop");
     for (var j=0;j<b.length;j++) b[j].classList.remove("selected");
+    updateTextControls();
+  }
+
+  function setPanMode(on){
+    panMode = !!on;
+    if (panMode){
+      btnPan.classList.add("active");
+      if (btnPan_f) btnPan_f.classList.add("active");
+      setStatus("Modalità Pan: trascina lo sfondo per spostarti.");
+    } else {
+      btnPan.classList.remove("active");
+      if (btnPan_f) btnPan_f.classList.remove("active");
+      setStatus("Pensa ad un argomento e scrivigli intorno tutto quello che ti viene in mente");
+    }
   }
 
   function setLinkMode(on) {
@@ -716,26 +1076,30 @@
       if (panMode) setPanMode(false);
       if (!selectedBoxId) { setStatus("Seleziona un box prima di collegare."); return; }
 
-      linkingFrom = selectedBoxId;
-      btnLink.classList.add("active");
-      if (btnLink_f) btnLink_f.classList.add("active");
+      linkPreset = linkPreset || { end:"arrow", shape:"straight", curveDir:1 };
 
-      var a = document.querySelectorAll(".pop");
-      for (var i=0;i<a.length;i++) {
-        a[i].classList.toggle("linking", a[i].dataset.id === linkingFrom);
-      }
-      setStatus("Modalita collega: clicca un altro box.");
+      openLinkOptions(function (ok) {
+        if (!ok) { setStatus("Collegamento annullato."); return; }
+
+        linkingFrom = selectedBoxId;
+        btnLink.classList.add("active");
+        var a = document.querySelectorAll(".pop");
+        for (var i=0;i<a.length;i++) {
+          a[i].classList.toggle("linking", a[i].dataset.id === linkingFrom);
+        }
+        setStatus("Modalita collega: clicca un altro box.");
+      });
+
+      return;
     } else {
       linkingFrom = null;
       btnLink.classList.remove("active");
-      if (btnLink_f) btnLink_f.classList.remove("active");
-
       var b = document.querySelectorAll(".pop");
       for (var j=0;j<b.length;j++) b[j].classList.remove("linking");
-      setStatus("Pronto");
+      setStatus("Pensa ad un argomento e scrivigli intorno tutto quello che ti viene in mente");
     }
   }
-
+      
   function setMoveMode(on) {
     moveMode = !!on;
 
@@ -748,7 +1112,7 @@
     } else {
       btnMove.classList.remove("active");
       if (btnMove_f) btnMove_f.classList.remove("active");
-      setStatus("Pronto");
+      setStatus("Pensa ad un argomento e scrivigli intorno tutto quello che ti viene in mente");
     }
 
     var tas = document.querySelectorAll(".pop .body");
@@ -756,45 +1120,26 @@
       tas[i].readOnly = moveMode;
     }
   }
-
-  function setPanMode(on){
-    panMode = !!on;
-    if (panMode){
-      btnPan.classList.add("active");
-      if (btnPan_f) btnPan_f.classList.add("active");
-      setStatus("Modalità Pan: trascina lo sfondo per spostarti.");
-    } else {
-      btnPan.classList.remove("active");
-      if (btnPan_f) btnPan_f.classList.remove("active");
-      setStatus("Pronto.");
-    }
-  }
-
+  
   function autoGrow(ta, popModel) {
-    // reset per calcolare bene lo scrollHeight
     ta.style.height = "auto";
 
-    // calcolo dell'altezza di UNA riga
     var computed = window.getComputedStyle(ta);
     var lineH = parseFloat(computed.lineHeight);
     if (isNaN(lineH)) {
-      lineH = parseFloat(computed.fontSize) * 1.25 || 18; // fallback
+      lineH = parseFloat(computed.fontSize) * 1.25 || 18;
     }
 
     var txt = ta.value || "";
     var needed;
 
     if (!txt.trim()) {
-      // POP vuoto
       if (popModel && popModel.bigIntro) {
-        // solo il PRIMO pop può nascere a 4 righe
         needed = lineH * 4;
       } else {
-        // tutti gli altri (e il primo dopo l’uso) = una riga sola
         needed = lineH;
       }
     } else {
-      // c'è testo → altezza minima che permette di leggere tutto
       needed = ta.scrollHeight;
       if (needed < lineH) needed = lineH;
     }
@@ -805,9 +1150,16 @@
 
     ta.style.height = needed + "px";
   }
+  
+  function resizeSelectedTextarea() {
+    if (!selectedBoxId) return;
+    var p = pops.find(function(pp){ return pp.id === selectedBoxId; });
+    if (!p) return;
+    var ta = document.querySelector('.pop[data-id="' + selectedBoxId + '"] .body');
+    if (ta) autoGrow(ta, p);
+  }
 
   function createPop(x, y) {
-    // è il primo POP della mappa?
     var isFirst = (pops.length === 0);
 
     var p = {
@@ -815,26 +1167,36 @@
       x: x,
       y: y,
       text: "",
+      color: "#000000",
+      borderColor: "#000000",
+      size: "medium",
+      borderSize: "thin",
+      bold: false,
       height: 0,
-      bigIntro: isFirst   // solo il primo POP nasce a 4 righe
+      bigIntro: isFirst
     };
 
     pops.push(p);
     render();
 
-    // 👉 MOSTRA IL SUGGERIMENTO SOLO QUANDO SI CREA UN NUOVO POP
-    setStatus("Suggerimento: collega un nuovo concetto.");
     selectBox(p.id);
-    var el = document.querySelector('[data-id="' + p.id + '"] .body');
+
+    setStatus(
+      "Pensa ad un argomento e scrivigli intorno tutto quello che ti viene in mente"
+    );
+
+    var el = document.querySelector('.pop[data-id="' + p.id + '"] .body');
     if (el) el.focus();
   }
 
-  function addLink(from, to) {
+  function addLink(from, to, preset) {
     if (!from || !to || from === to) return;
-    for (var i = 0; i < links.length; i++) {
+    for (var i=0;i<links.length;i++) {
       if (links[i].from === from && links[i].to === to) return;
     }
-    links.push({ id: uid(), from: from, to: to, label: "" });
+    var p = preset || linkPreset || { end:"arrow", shape:"straight", curveDir:1 };
+    var curveDir = (typeof p.curveDir === "number") ? p.curveDir : 1;
+    links.push({ id: uid(), from: from, to: to, end: p.end, shape: p.shape, curveDir: curveDir });
   }
 
   function deleteSelected() {
@@ -862,14 +1224,10 @@
     var el = document.querySelector('.pop[data-id="'+id+'"]');
     if (!el) return null;
 
-    var r = el.getBoundingClientRect();
-    var br = boardRect();
-
-    var x = (r.left - br.left - camX) / camS;
-    var y = (r.top  - br.top  - camY) / camS;
-
-    var w = r.width  / camS;
-    var h = r.height / camS;
+    var x = el.offsetLeft;
+    var y = el.offsetTop;
+    var w = el.offsetWidth;
+    var h = el.offsetHeight;
 
     return {
       cx: x + w/2, cy: y + h/2,
@@ -886,10 +1244,9 @@
   }
 
   function renderLinks() {
-    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    while (svg.firstChild) svg.firstChild.remove();
 
     var NS = "http://www.w3.org/2000/svg";
-
     var defs = document.createElementNS(NS, "defs");
     var marker = document.createElementNS(NS, "marker");
     marker.setAttribute("id", "arrow");
@@ -919,101 +1276,86 @@
       var p1 = edgePoint(A.cx, A.cy, A.hw, A.hh, dx, dy);
       var p2 = edgePoint(B.cx, B.cy, B.hw, B.hh, -dx, -dy);
 
-      var line = document.createElementNS(NS, "line");
-      line.setAttribute("x1", p1.x);
-      line.setAttribute("y1", p1.y);
-      line.setAttribute("x2", p2.x);
-      line.setAttribute("y2", p2.y);
-      line.setAttribute("marker-end", "url(#arrow)");
-      line.classList.add("linkLine");
-      line.dataset.linkid = l.id;
+      var end = l.end || "arrow";
+      var shape = l.shape || "straight";
 
-      if (l.id === selectedLinkId) line.classList.add("selected");
+      var color = l.color || "#000000";
+      if (!l.color) {
+        var toPop = pops.find(function(pp){ return pp.id === l.to; });
+        if (toPop && toPop.color) color = toPop.color;
+      }
 
-      line.addEventListener("mousedown", function (e) {
+      var elWire;
+
+      if (shape === "curve") {
+        var mx = (p1.x + p2.x) / 2;
+        var my = (p1.y + p2.y) / 2;
+
+        var len = Math.hypot(dx, dy) || 1;
+        var nx = -dy / len;
+        var ny =  dx / len;
+
+        var offset = Math.min(70, Math.max(20, len / 4));
+        var dir = (typeof l.curveDir === "number") ? l.curveDir : 1;
+        var cx = mx + nx * offset * dir;
+        var cy = my + ny * offset * dir;
+
+        elWire = document.createElementNS(NS, "path");
+        elWire.setAttribute("fill", "none");
+        elWire.setAttribute("d", "M " + p1.x + " " + p1.y + " Q " + cx + " " + cy + " " + p2.x + " " + p2.y);
+      } else {
+        elWire = document.createElementNS(NS, "line");
+        elWire.setAttribute("x1", p1.x);
+        elWire.setAttribute("y1", p1.y);
+        elWire.setAttribute("x2", p2.x);
+        elWire.setAttribute("y2", p2.y);
+      }
+
+      if (end === "arrow") {
+        elWire.setAttribute("marker-end", "url(#arrow)");
+      }
+
+      elWire.classList.add("linkLine");
+      elWire.dataset.linkid = l.id;
+      elWire.style.stroke = color;
+
+      if (l.id === selectedLinkId) elWire.classList.add("selected");
+
+      function handlePointerDown(e){
         e.stopPropagation();
         setLinkMode(false);
         selectLink(l.id);
-        setStatus("Link selezionato.");
-      });
-
-      svg.appendChild(line);
-
-      if (l.label && l.label.trim() !== "") {
-        var txt = document.createElementNS(NS, "text");
-
-        var tx = (p1.x + p2.x) / 2;
-        var ty = (p1.y + p2.y) / 2;
-        ty = ty - 8;
-
-        txt.setAttribute("x", tx);
-        txt.setAttribute("y", ty);
-        txt.setAttribute("text-anchor", "middle");
-        txt.setAttribute("dominant-baseline", "middle");
-        txt.setAttribute("fill", "#000");
-        txt.setAttribute("font-size", "13");
-        txt.style.cursor = "pointer";
-        txt.style.pointerEvents = "auto";
-
-        txt.textContent = l.label;
-        txt.dataset.linkid = l.id;
-
-        txt.addEventListener("pointerdown", function (e) {
-          e.stopPropagation();
-        });
-
-        txt.addEventListener("mousedown", function (e) {
-          e.stopPropagation();
-
-          var id = this.dataset.linkid;
-
-          setLinkMode(false);
-          setMoveMode(false);
-          selectLink(id);
-
-          for (var k = 0; k < links.length; k++) {
-            if (links[k].id === id) {
-              var nuovo = prompt(
-                linkLabelPromptMsg,
-                links[k].label || ""
-              );
-              if (nuovo !== null) links[k].label = nuovo;
-              break;
-            }
-          }
-
-          renderLinks();
-          clearSelections();
-          setStatus("Pronto");
-        });
-
-        svg.appendChild(txt);
-        var bb = txt.getBBox();
-
-        var padX = 6;
-        var padY = 3;
-
-        var bg = document.createElementNS(NS, "rect");
-        bg.setAttribute("x", bb.x - padX);
-        bg.setAttribute("y", bb.y - padY);
-        bg.setAttribute("width", bb.width + padX * 2);
-        bg.setAttribute("height", bb.height + padY * 2);
-        bg.setAttribute("rx", 4);
-        bg.setAttribute("ry", 4);
-
-        var labelBg = "#f6f7fb";
-        if (window.matchMedia && window.matchMedia("print").matches) {
-          labelBg = "#ffffff";
-        }
-
-        bg.setAttribute("fill", labelBg);
-        bg.setAttribute("stroke", "none");
-        bg.style.pointerEvents = "none";
-
-        svg.removeChild(txt);
-        svg.appendChild(bg);
-        svg.appendChild(txt);
+        setStatus("Collegamento selezionato.");
       }
+
+      function handleDblClick(e){
+        e.stopPropagation();
+        setLinkMode(false);
+        selectLink(l.id);
+
+        linkPreset = {
+          end: l.end || "arrow",
+          shape: l.shape || "straight",
+          curveDir: (typeof l.curveDir === "number") ? l.curveDir : 1
+        };
+
+        openLinkOptions(function(ok){
+          if (!ok) {
+            setStatus("Modifica collegamento annullata.");
+            return;
+          }
+          l.end = linkPreset.end;
+          l.shape = linkPreset.shape;
+          l.curveDir = linkPreset.curveDir;
+          renderLinks();
+          setStatus("Collegamento aggiornato.");
+        });
+      }
+
+      elWire.addEventListener("pointerdown", handlePointerDown);
+      elWire.addEventListener("dblclick", handleDblClick);
+
+      svg.appendChild(elWire);
     });
   }
 
@@ -1025,74 +1367,104 @@
     if (ghost) ghost.style.display = pops.length ? "none" : "flex";
 
     pops.forEach(function (p, idx) {
+      if (!p.color) p.color = "#000000";
+      if (!p.size) p.size = "medium";
+      if (typeof p.bold === "undefined") p.bold = false;
+
       var el = document.createElement("div");
       el.className = "pop";
       el.dataset.id = p.id;
       el.style.left = p.x + "px";
       el.style.top  = p.y + "px";
 
-      // Mostra il placeholder solo per i primi MAX_PLACEHOLDER_POPS
-      var placeholderText =
-        'placeholder="Scrivi un concetto chiave senza articoli o aggettivi (SI: NAPOLEONE — NO: Il grande NAPOLEONE)"';
+      el.style.borderColor = p.color || "#000000";
 
-      var placeholderAttr = (idx < MAX_PLACEHOLDER_POPS) ? placeholderText : "";
+      var placeholderAttr = "";
+      if (idx === 0) {
+        placeholderAttr = ' placeholder="Scrivi qui l&#39;argomento a cui stai pensando e di cui vuoi fare una mappa."';
+      } else {
+        placeholderAttr = ' placeholder=""';
+      }
 
       el.innerHTML =
-        '<textarea class="body" spellcheck="false" rows="1" ' +
-        placeholderAttr +
-        '></textarea>';
+        '<textarea class="body" spellcheck="false" rows="1" cols="6"' + placeholderAttr + '></textarea>';
 
       var ta = el.querySelector(".body");
+
       ta.value = p.text || "";
 
-      autoGrow(ta, p);
+      var textSizeKey = p.size || "medium";
+      var fontSizePx;
+      if (textSizeKey === "small") {
+        fontSizePx = "14px";
+      } else if (textSizeKey === "large") {
+        fontSizePx = "22px";
+      } else {
+        fontSizePx = "18px";   // medium
+      }
+
+      var borderSizeKey = p.borderSize || "thin";
+      var borderWidth;
+      if (borderSizeKey === "thin") {
+        borderWidth = 1;
+      } else if (borderSizeKey === "thick") {
+        borderWidth = 3;
+      } else {
+        borderWidth = 2;       // medium
+      }
+
+      ta.style.fontSize = fontSizePx;
+      ta.style.fontWeight = p.bold ? "700" : "400";
+      ta.style.color = p.color || "#000000";
+      el.style.borderWidth = borderWidth + "px";
+      el.style.borderColor = p.borderColor || "#000000";
+
+      if (typeof p.height === "number" && p.height > 0) {
+        ta.style.height = p.height + "px";
+      } else {
+        autoGrow(ta, p);
+      }
 
       if (p.id === selectedBoxId) el.classList.add("selected");
       if (p.id === linkingFrom) el.classList.add("linking");
 
       ta.addEventListener("focus", function () {
+        selectedBoxPart = "text";
         selectBox(p.id);
 
-        // Su smartphone: chiudo l'header e porto il POP al centro dello schermo
+        /* SU SMARTPHONE: chiudo l'header per liberare spazio
+           e porto il box al centro dello schermo */
         if (window.innerWidth <= 768) {
           headerCollapsed = true;
           header.classList.add("collapsed");
-          try {
-            setTimeout(function(){
+          setTimeout(function(){
+            try {
               el.scrollIntoView({ block: "center", behavior: "smooth" });
-            }, 80);
-          } catch (e) {}
+            } catch(e) {}
+          }, 80);
         }
       });
 
       ta.addEventListener("mousedown", function (e) {
+        selectedBoxPart = "text";
         selectBox(p.id);
         if (linkingFrom && linkingFrom !== p.id) e.preventDefault();
       });
 
       ta.addEventListener("input", function (e) {
         p.text = e.target.value;
-
-        // appena il primo POP viene compilato, perde la modalità "4 righe"
-        if (p.bigIntro && p.text.trim() !== "") {
-          p.bigIntro = false;
-        }
-
         autoGrow(ta, p);
         renderLinks();
       });
 
+      ta.addEventListener("blur", function(){
+        /* opzionale: non riapro l'header automaticamente
+           per non creare movimento continuo; puoi riabilitare se preferisci */
+      });
+
       el.addEventListener("click", function () {
         if (linkingFrom && linkingFrom !== p.id) {
-          addLink(linkingFrom, p.id);
-
-          var last = links[links.length - 1];
-          var t = prompt(
-            linkLabelPromptMsg,
-            ""
-          );
-          if (t !== null) last.label = t;
-
+          addLink(linkingFrom, p.id, linkPreset);
           setLinkMode(false);
           renderLinks();
           setStatus("Collegamento creato.");
@@ -1102,6 +1474,7 @@
       var dragging = false, sx=0, sy=0, ox=0, oy=0;
 
       el.addEventListener("pointerdown", function (e) {
+        if (e.target && e.target.classList && e.target.classList.contains("body")) selectedBoxPart = "text"; else selectedBoxPart = "border";
         if (e.pointerType === "mouse" && e.button !== 0) return;
         if (!moveMode && e.target && e.target.tagName && e.target.tagName.toLowerCase() === "textarea") return;
 
@@ -1119,8 +1492,8 @@
 
         function onMove(ev) {
           if (!dragging) return;
-          var dx = (ev.clientX - sx) / camS;
-          var dy = (ev.clientY - sy) / camS;
+          var dx = (ev.clientX - sx) / view.s;
+          var dy = (ev.clientY - sy) / view.s;
           var pos = clampToBoard(ox + dx, oy + dy);
           p.x = pos.x; p.y = pos.y;
           el.style.left = p.x + "px";
@@ -1142,16 +1515,11 @@
     });
 
     renderLinks();
+    updateTextControls();
   }
 
   function getState() {
-    return {
-      version: 2,
-      createdAt: new Date().toISOString(),
-      focalQuestion: focalQuestion,
-      pops: pops,
-      links: links
-    };
+    return { version: 3, createdAt: new Date().toISOString(), pops: pops, links: links };
   }
 
   function downloadBlob(name, blob) {
@@ -1165,7 +1533,6 @@
     setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
   }
 
-  // --- VERSIONE ESTESA con nome personalizzato, come in "stampa.html" ---
   function exportJSON(customBaseName) {
     var stateStr = JSON.stringify(getState(), null, 2);
     var blob = new Blob([stateStr], { type: "application/json;charset=utf-8" });
@@ -1217,7 +1584,7 @@
     downloadBlob(filename, blob);
     setStatus("Esportato HTML (" + filename + ").");
   }
-
+  
   function parseImportedText(text) {
     var t = (text || "").trim();
 
@@ -1234,13 +1601,9 @@
 
   function applyState(state) {
     if (!state || !state.pops || !state.links) throw new Error("Dati incompleti");
+
     pops = state.pops;
     links = state.links;
-
-    focalQuestion = state.focalQuestion || "";
-    if (focalTa) {
-      focalTa.value = focalQuestion;
-    }
 
     clearSelections();
     setLinkMode(false);
@@ -1248,204 +1611,23 @@
     setStatus("Import OK.");
   }
 
-  function doImport() {
-    fileInput.value = "";
-    fileInput.click();
-  }
-
-  fileInput.addEventListener("change", function (e) {
-    var file = e.target.files && e.target.files[0];
-    if (!file) return;
-    file.text().then(function (text) {
-      var state = parseImportedText(text);
-      applyState(state);
-    }).catch(function (err) {
-      console.error(err);
-      setStatus("Errore import.");
-      alert("Import fallito: usa un file esportato da questa app (JSON o HTML).");
-    });
-  });
-
   function exportPDF() {
     setStatus("Stampa: scegli Salva come PDF.");
     window.print();
   }
 
-  var pointers = new Map();
-  var pinchStartDist = 0;
-  var pinchStartS = 1;
-  var pinchStartMid = null;
-  var panStart = null;
-
-  function dist(a,b){
-    var dx = a.x - b.x, dy = a.y - b.y;
-    return Math.sqrt(dx*dx + dy*dy);
-  }
-  function mid(a,b){
-    return { x:(a.x+b.x)/2, y:(a.y+b.y)/2 };
-  }
-
-  board.addEventListener("pointerdown", function(e){
-    if (e.target && e.target.closest && e.target.closest(".pop")) return;
-
-    pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
-    board.setPointerCapture(e.pointerId);
-
-    if (pointers.size === 1) {
-      if (!panMode) {
-        panStart = null;
-      } else {
-        panStart = { x:e.clientX, y:e.clientY, camX:camX, camY:camY };
-      }
-    } else if (pointers.size === 2) {
-      var arr = Array.from(pointers.values());
-      pinchStartDist = dist(arr[0], arr[1]);
-      pinchStartS = camS;
-      pinchStartMid = mid(arr[0], arr[1]);
-    }
-  }, { passive:false });
-
-  board.addEventListener("pointermove", function(e){
-    if (!pointers.has(e.pointerId)) return;
-    pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
-
-    if (pointers.size === 1 && panStart) {
-      var p = Array.from(pointers.values())[0];
-      camX = panStart.camX + (p.x - panStart.x);
-      camY = panStart.camY + (p.y - panStart.y);
-      applyCamera();
-      renderLinks();
-    }
-
-    if (pointers.size === 2) {
-      var arr = Array.from(pointers.values());
-      var d = dist(arr[0], arr[1]);
-      if (!pinchStartDist) return;
-
-      var newS = pinchStartS * (d / pinchStartDist);
-      if (newS < 0.25) newS = 0.25;
-      if (newS > 4.0) newS = 4.0;
-
-      var m = mid(arr[0], arr[1]);
-
-      var w0 = screenToWorld(pinchStartMid.x, pinchStartMid.y);
-
-      camS = newS;
-
-      var r = boardRect();
-      camX = m.x - r.left - (w0.x * camS);
-      camY = m.y - r.top  - (w0.y * camS);
-
-      applyCamera();
-      renderLinks();
-    }
-  }, { passive:false });
-
-  board.addEventListener("pointerup", function(e){
-    pointers.delete(e.pointerId);
-    if (pointers.size < 2) pinchStartDist = 0;
-    if (pointers.size === 0) panStart = null;
-  }, { passive:true });
-
-  board.addEventListener("pointercancel", function(e){
-    pointers.delete(e.pointerId);
-    if (pointers.size < 2) pinchStartDist = 0;
-    if (pointers.size === 0) panStart = null;
-  }, { passive:true });
-
-  /* Zoom con CTRL + rotellina */
-  board.addEventListener("wheel", function(e){
-    if (!e.ctrlKey) return;
-    e.preventDefault();
-
-    var before = screenToWorld(e.clientX, e.clientY);
-    var factor = (e.deltaY < 0) ? 1.08 : 0.92;
-
-    var newS = camS * factor;
-    if (newS < 0.25) newS = 0.25;
-    if (newS > 4.0) newS = 4.0;
-    camS = newS;
-
-    var br = boardRect();
-    var sx = e.clientX - br.left;
-    var sy = e.clientY - br.top;
-
-    camX = sx - before.x * camS;
-    camY = sy - before.y * camS;
-
-    applyCamera();
-    renderLinks();
-  }, { passive:false });
-
   board.addEventListener("mousedown", function (e) {
-    // Se siamo in modalità selezione stampa, intercettiamo il drag
-    if (isSelectingPrintArea) {
-      var r = boardRect();
-      var startX = e.clientX - r.left;
-      var startY = e.clientY - r.top;
-
-      if (!printSelectionBox) return;
-
-      printSelectionBox.style.display = "block";
-      printSelectionBox.style.left = startX + "px";
-      printSelectionBox.style.top = startY + "px";
-      printSelectionBox.style.width = "0px";
-      printSelectionBox.style.height = "0px";
-
-      function onMove(ev){
-        var currX = ev.clientX - r.left;
-        var currY = ev.clientY - r.top;
-        var x = Math.min(startX, currX);
-        var y = Math.min(startY, currY);
-        var w = Math.abs(currX - startX);
-        var h = Math.abs(currY - startY);
-        printSelectionBox.style.left = x + "px";
-        printSelectionBox.style.top = y + "px";
-        printSelectionBox.style.width = w + "px";
-        printSelectionBox.style.height = h + "px";
-      }
-
-      function onUp(ev){
-        document.removeEventListener("mousemove", onMove);
-        document.removeEventListener("mouseup", onUp);
-
-        var endX = ev.clientX - r.left;
-        var endY = ev.clientY - r.top;
-        var x = Math.min(startX, endX);
-        var y = Math.min(startY, endY);
-        var w = Math.abs(endX - startX);
-        var h = Math.abs(endY - startY);
-
-        if (w < 10 || h < 10) {
-          // selezione troppo piccola → annulla
-          printSelectionRect = null;
-          if (printSelectionBox) printSelectionBox.style.display = "none";
-          setStatus("Selezione troppo piccola, riprova.");
-        } else {
-          printSelectionRect = { left:x, top:y, width:w, height:h };
-          setStatus("Area di stampa selezionata. Premi di nuovo Stampa in PDF per andare alla stampa.");
-        }
-
-        isSelectingPrintArea = false;
-      }
-
-      document.addEventListener("mousemove", onMove);
-      document.addEventListener("mouseup", onUp);
-
-      return;
-    }
-
     if (e.target === board) {
       clearSelections();
       setLinkMode(false);
-      setStatus("Pronto");
+      setStatus("Pensa ad un argomento e scrivigli intorno tutto quello che ti viene in mente");
     }
   });
 
   board.addEventListener("dblclick", function (e) {
     if (e.target && e.target.closest && e.target.closest(".pop")) return;
-    var w = screenToWorld(e.clientX, e.clientY);
-    var pos = clampToBoard(w.x, w.y);
+    var p = screenToWorld(e.clientX, e.clientY);
+    var pos = clampToBoard(p.x, p.y);
     createPop(pos.x, pos.y);
   });
 
@@ -1461,12 +1643,8 @@
 
   btnNew.addEventListener("click", function () {
     var r = boardRect();
-    var cx = r.left + r.width/2;
-    var cy = r.top  + r.height/2;
-    var w = screenToWorld(cx, cy);
-    createPop(w.x, w.y);
+    createPop(20 + Math.random()*(r.width-260), 20 + Math.random()*(r.height-160));
   });
-
   btnLink.addEventListener("click", function () { setLinkMode(!linkingFrom); });
   btnDelete.addEventListener("click", deleteSelected);
   btnMove.addEventListener("click", function () { setMoveMode(!moveMode); });
@@ -1488,37 +1666,10 @@
     }
   });
   btnImport.addEventListener("click", doImport);
-
   btnZoomIn.addEventListener("click", function(){ zoomAroundCenter(1.15); });
   btnZoomOut.addEventListener("click", function(){ zoomAroundCenter(1/1.15); });
 
-  // Collego i pulsanti flottanti alle stesse azioni dei bottoni originali
-  if (btnZoomIn_f) { btnZoomIn_f.addEventListener("click", function(){ btnZoomIn.click(); }); }
-  if (btnZoomOut_f) { btnZoomOut_f.addEventListener("click", function(){ btnZoomOut.click(); }); }
-  if (btnPan_f) { btnPan_f.addEventListener("click", function(){ btnPan.click(); }); }
-  if (btnMove_f) { btnMove_f.addEventListener("click", function(){ btnMove.click(); }); }
-  if (btnLink_f) { btnLink_f.addEventListener("click", function(){ btnLink.click(); }); }
-
-  if (focalTa) {
-    focalTa.addEventListener("input", function () {
-      focalQuestion = this.value;
-    });
-  }
-
-  /* Apertura/chiusura box "Info e comandi" */
-  btnKeyboardHelp.addEventListener("click", function(){
-    kbdOverlay.style.display = "flex";
-  });
-  btnKbdClose.addEventListener("click", function(){
-    kbdOverlay.style.display = "none";
-  });
-  kbdOverlay.addEventListener("click", function(e){
-    if (e.target === kbdOverlay) {
-      kbdOverlay.style.display = "none";
-    }
-  });
-
-  // --- PANNELLO Salva con nome ---
+  // Apertura pannello Opzioni salvataggio
   function openSaveOverlay() {
     if (!saveOverlay) return;
     // preset nome file
@@ -1584,7 +1735,7 @@
 
       var baseName = (saveFileNameInp && saveFileNameInp.value.trim()) || "";
       if (!baseName) {
-        baseName = "mappa_concettuale";
+        baseName = "mappa_mentale";
       }
 
       var radios = saveOverlay.querySelectorAll('input[name="saveFormat"]');
@@ -1606,7 +1757,7 @@
     });
   }
 
-  // Salva : sempre JSON, riusa il nome dell'ultima volta (se presente)
+  // Salva rapido: sempre JSON, riusa il nome dell'ultima volta (se presente)
   if (btnQuickSave) {
     btnQuickSave.addEventListener("click", function(){
       if (lastSaveBaseName) {
@@ -1617,8 +1768,168 @@
     });
   }
 
+  // Collego i pulsanti flottanti alle stesse azioni dei bottoni originali
+  if (btnZoomIn_f) {
+    btnZoomIn_f.addEventListener("click", function(){
+      btnZoomIn.click();
+    });
+  }
+
+  if (btnZoomOut_f) {
+    btnZoomOut_f.addEventListener("click", function(){
+      btnZoomOut.click();
+    });
+  }
+
+  if (btnPan_f) {
+    btnPan_f.addEventListener("click", function(){
+      btnPan.click();
+    });
+  }
+
+  if (btnMove_f) {
+    btnMove_f.addEventListener("click", function(){
+      btnMove.click();
+    });
+  }
+
+  if (btnLink_f) {
+    btnLink_f.addEventListener("click", function(){
+      btnLink.click();
+    });
+  }
+
+  txtColor.addEventListener("input", function(){
+    var newColor = txtColor.value || "#000000";
+
+    // Se è selezionato un collegamento, cambia colore alla freccia
+    if (selectedLinkId && !selectedBoxId) {
+      var l = links.find(function(ll){ return ll.id === selectedLinkId; });
+      if (l) {
+        l.color = newColor;
+        renderLinks();
+      }
+      return;
+    }
+
+    // Se è selezionato un box, controlla se stai lavorando su testo o bordo
+    if (!selectedBoxId) return;
+    var p = pops.find(function(pp){ return pp.id === selectedBoxId; });
+    if (!p) return;
+
+    if (selectedBoxPart === "text") {
+      p.color = newColor;
+      var ta = document.querySelector('.pop[data-id="'+p.id+'"] .body');
+      if (ta) ta.style.color = p.color;
+    } else {
+      p.borderColor = newColor;
+      var boxEl = document.querySelector('.pop[data-id="'+p.id+'"]');
+      if (boxEl) boxEl.style.borderColor = p.borderColor;
+      // aggiorna frecce in modo coerente con il bordo solo se non hanno un colore proprio
+    }
+
+    renderLinks();
+  });
+
+  btnSizeSmall.addEventListener("click", function(){
+    if (!selectedBoxId) return;
+    var p = pops.find(function(pp){ return pp.id === selectedBoxId; });
+    if (!p) return;
+
+    if (selectedBoxPart === "border") {
+      // scala bordo verso il più sottile: thick -> medium -> thin
+      var current = p.borderSize || "thin";
+      if (current === "thick") current = "medium";
+      else current = "thin";
+      p.borderSize = current;
+    } else {
+      // scala testo verso il più piccolo: large -> medium -> small
+      var current = p.size || "medium";
+      if (current === "large") current = "medium";
+      else current = "small";
+      p.size = current;
+    }
+
+    var ta = document.querySelector('.pop[data-id="'+p.id+'"] .body');
+    if (ta) {
+      autoGrow(ta, p);
+    }
+    render();
+    updateTextControls();
+  });
+
+  btnSizeLarge.addEventListener("click", function(){
+    if (!selectedBoxId) return;
+    var p = pops.find(function(pp){ return pp.id === selectedBoxId; });
+    if (!p) return;
+
+    if (selectedBoxPart === "border") {
+      // scala bordo verso il più spesso: thin -> medium -> thick
+      var current = p.borderSize || "thin";
+      if (current === "thin") current = "medium";
+      else current = "thick";
+      p.borderSize = current;
+    } else {
+      // scala testo verso il più grande: small -> medium -> large
+      var current = p.size || "medium";
+      if (current === "small") current = "medium";
+      else current = "large";
+      p.size = current;
+    }
+
+    var ta = document.querySelector('.pop[data-id="'+p.id+'"] .body');
+    if (ta) {
+      autoGrow(ta, p);
+    }
+    render();
+    updateTextControls();
+  });
+
+  btnBold.addEventListener("click", function(){
+    if (!selectedBoxId) return;
+    var p = pops.find(function(pp){ return pp.id === selectedBoxId; });
+    if (!p) return;
+    p.bold = !p.bold;
+    var ta = document.querySelector('.pop[data-id="'+p.id+'"] .body');
+    if (ta) {
+      ta.style.fontWeight = p.bold ? "700" : "400";
+      autoGrow(ta, p);
+    }
+    updateTextControls();
+  });
+
+  function doImport() {
+    fileInput.value = "";
+    fileInput.click();
+  }
+
+  fileInput.addEventListener("change", function (e) {
+    var file = e.target.files && e.target.files[0];
+    if (!file) return;
+    file.text().then(function (text) {
+      var state = parseImportedText(text);
+      applyState(state);
+    }).catch(function (err) {
+      console.error(err);
+      setStatus("Errore import.");
+      alert("Import fallito: usa un file esportato da questa app (JSON o HTML).");
+    });
+  });
+
+  btnKeyboardHelp.addEventListener("click", function(){
+    kbdOverlay.style.display = "flex";
+  });
+  btnKbdClose.addEventListener("click", function(){
+    kbdOverlay.style.display = "none";
+  });
+  kbdOverlay.addEventListener("click", function(e){
+    if (e.target === kbdOverlay) {
+      kbdOverlay.style.display = "none";
+    }
+  });
+
   render();
-  setStatus("Suggerimento: rispondi alla domanda che hai scritto, collegando le parole \"concetto\" con dei \"verbi\" che fanno capire la loro relazione (es. NAPOLEONE - conquista - EUROPA).");
+  setStatus("Pensa ad un argomento e scrivigli intorno tutto quello che ti viene in mente");
 
   /* --- ADATTAMENTO CONTROLLI FLOTTANTI CON TASTIERA MOBILE --- */
   if (window.visualViewport) {
@@ -1626,14 +1937,14 @@
     var baseBottom = 20;
 
     function adjustForKeyboard() {
-      // solo su dispositivi piccoli
+      // solo su dispositivi piccoli ha senso
       if (window.innerWidth > 900) {
         document.documentElement.style.setProperty('--controls-bottom', baseBottom + 'px');
         return;
       }
       var delta = window.innerHeight - vv.height;
       if (delta > 100) {
-        // probabile tastiera aperta
+        // probabile tastiera aperta: alzo i controlli sopra
         document.documentElement.style.setProperty(
           '--controls-bottom',
           (delta + baseBottom) + 'px'
@@ -1650,22 +1961,6 @@
 
     adjustForKeyboard();
   }
-  // Ripristina clipPath dopo la stampa
-  if (typeof window !== "undefined") {
-    window.addEventListener("afterprint", function(){
-      if (world && world.dataset && typeof world.dataset._oldClipPath !== "undefined") {
-        world.style.clipPath = world.dataset._oldClipPath;
-        delete world.dataset._oldClipPath;
-      }
-      if (printSelectionBox) {
-        printSelectionBox.style.display = "none";
-      }
-      printSelectionRect = null;
-      isSelectingPrintArea = false;
-      setStatus("Pronto");
-    });
-  }
-
 })();
 </script>
 </body>
