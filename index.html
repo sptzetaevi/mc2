@@ -103,7 +103,7 @@
 
     .focalQuestionTa{
       width:360px;
-      height:42px;
+      height:44px;
       resize:vertical;
       font-size:13px;
       padding:8px;
@@ -447,7 +447,7 @@
         <button class="btn tiny" id="btnPan" title="Pan vista">
           <span aria-hidden="true">✋</span>
         </button>
-        <button class="btn tiny" id="btnKeyboardHelp">Comandi da tastiera</button>
+        <button class="btn tiny" id="btnKeyboardHelp">Info e comandi</button>
       </div>
 
       <!-- Riga di stato come "seconda linea" -->
@@ -471,10 +471,10 @@
     <div class="ghost">Doppio click sullo sfondo per creare un pop</div>
   </div>
 
-  <!-- BOX COMANDI DA TASTIERA -->
+  <!-- BOX Info e comandi -->
   <div class="modalOverlay" id="kbdOverlay">
     <div class="modal">
-      <h3>Comandi da tastiera</h3>
+      <h3>Info e comandi</h3>
       <p style="font-size:14px; line-height:1.4; margin:6px 0 10px;">
         • Doppio click sullo sfondo = crea box<br>
         • Modalità Pan attiva + trascina sfondo = sposta vista<br>
@@ -1505,7 +1505,7 @@
     });
   }
 
-  /* Apertura/chiusura box "Comandi da tastiera" */
+  /* Apertura/chiusura box "Info e comandi" */
   btnKeyboardHelp.addEventListener("click", function(){
     kbdOverlay.style.display = "flex";
   });
