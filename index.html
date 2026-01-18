@@ -1074,7 +1074,7 @@
     } else {
       btnMove.classList.remove("active");
       if (btnMove_f) btnMove_f.classList.remove("active");
-      setStatus("Pensa ad un argomento e scrivigli intorno tutto quello che ti viene in mente quando pensi ad un argomento.");
+      setStatus("Pensa ad un argomento e scrivigli intorno tutto quello che ti viene in mente");
     }
 
     var tas = document.querySelectorAll(".pop .body");
@@ -1144,7 +1144,7 @@
     selectBox(p.id);
 
     setStatus(
-      "Pensa ad un argomento e scrivigli intorno tutto quello che ti viene in mente quando pensi ad un argomento.."
+      "Pensa ad un argomento e scrivigli intorno tutto quello che ti viene in mente"
     );
 
     var el = document.querySelector('.pop[data-id="' + p.id + '"] .body');
@@ -1345,7 +1345,7 @@
       if (idx === 0) {
         placeholderAttr = ' placeholder="Scrivi qui l&#39;argomento a cui stai pensando e di cui vuoi fare una mappa."';
       } else {
-        placeholderAttr = ' placeholder="qui quello che si collega"';
+        placeholderAttr = ' placeholder=""';
       }
 
       el.innerHTML =
@@ -1582,7 +1582,7 @@
     if (e.target === board) {
       clearSelections();
       setLinkMode(false);
-      setStatus("Pensa ad un argomento e scrivigli intorno tutto quello che ti viene in mente quando pensi ad un argomento.");
+      setStatus("Pensa ad un argomento e scrivigli intorno tutto quello che ti viene in mente");
     }
   });
 
@@ -1872,7 +1872,7 @@
   });
 
   render();
-  setStatus("Pensa ad un argomento e scrivigli intorno tutto quello che ti viene in mente quando pensi ad un argomento.");
+  setStatus("Pensa ad un argomento e scrivigli intorno tutto quello che ti viene in mente");
 
   /* --- ADATTAMENTO CONTROLLI FLOTTANTI CON TASTIERA MOBILE --- */
   if (window.visualViewport) {
