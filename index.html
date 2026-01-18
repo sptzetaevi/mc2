@@ -26,6 +26,8 @@
       box-sizing:border-box;
     }
     .headerInner{
+  gap:10px;
+
       display:flex;
       gap:10px;
       flex-wrap:wrap;
@@ -34,6 +36,13 @@
     }
 
     /* Maniglia-cassetto ingrandita con frecce */
+    .rightButtons{
+      margin-left:auto;
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+    }
+
     .headerHandle{
       width:100%;
       height:20px;                       /* più alta */
@@ -53,6 +62,8 @@
     }
 
     header.collapsed .headerInner{
+  gap:10px;
+
       display:none;
     }
 
@@ -80,7 +91,7 @@
       font-size:12px; border:1px solid rgba(0,0,0,.2); border-bottom-width:2px;
       padding:1px 6px; border-radius:6px; background:#fafafa;
     }
-    .status{ font-size:13px; opacity:.9; white-space:nowrap; }
+    .status{ font-size:13px; opacity:.9; white-space:nowrap; flex:1 1 60%; order:90; margin-top:4px; padding:4px 8px; border-radius:6px; background:#e5e5e5; }
 
     .textControls{
       display:flex;
@@ -88,6 +99,11 @@
       gap:6px;
       font-size:13px;
       white-space:nowrap;
+      flex: 0 0 auto;        /* solo lo spazio necessario */
+      order: 90;             /* stessa riga della status */
+      justify-content:flex-end;
+      margin-top:4px;
+      margin-left:auto;      /* spinge i comandi testo a destra */
     }
     .textControls input[type="color"]{
       width:26px;
@@ -295,13 +311,7 @@
       }
     }
 
-    #mapTitle {
-      font-size: 22px;
-      font-weight: 800;
-      letter-spacing: 2px;
-      user-select: none;
-      margin-left:auto;
-    }
+    #mapTitle { font-size:22px; font-weight:800; letter-spacing:2px; user-select:none; margin-left:6px; flex:0 0 auto; }
 
     .homeLogo{
       margin-left: 10px;
@@ -372,27 +382,51 @@
 
     /* Ottimizzazioni base per schermi piccoli */
     @media (max-width: 768px) {
-      #mapTitle {
-        font-size: 16px;
-        letter-spacing: 1px;
-      }
-      .status {
-        display:none;
-      }
-      .textControls {
-        display:none;
-      }
-      .headerInner {
-        padding:6px 8px;
-      }
-      .btn {
-        font-size:12px;
-        padding:5px 7px;
-      }
-      .pop {
-        max-width: 28ch;
-      }
-    }
+  .headerInner {
+    padding:6px 8px;
+    flex-wrap:wrap;
+  }
+
+  #mapTitle {
+    font-size:20px;
+    font-weight:800;
+    letter-spacing:2px;
+    user-select:none;
+    margin-left:6px;
+    flex:1 1 100%;
+  }
+
+  .status{
+    font-size:13px;
+    opacity:.9;
+    white-space:normal;
+    flex:1 1 100%;
+    order:90;
+    margin-top:4px;
+    padding:4px 8px;
+    border-radius:6px;
+    background:#e5e5e5;
+  }
+
+  .textControls {
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    flex:1 1 100%;
+    justify-content:flex-start;
+    margin-top:4px;
+  }
+
+  .btn {
+    font-size:12px;
+    padding:5px 7px;
+    white-space:nowrap;
+  }
+
+  .pop {
+    max-width: 28ch;
+  }
+}
 </style>
 </head>
 
@@ -401,7 +435,19 @@
     
   <header id="mainHeader">
     <div class="headerInner">
-      <button class="btn" id="btnNew">+ Nuovo pop</button>
+      <!-- Logo prima -->
+      <a
+         class="homeLogo"
+         href="https://sptzetaevi.github.io/antimappificio/"
+         title="Torna alla pagina principale ANTIMAPPIFICIO">
+        <span class="logoLetters">A&nbsp;M</span>
+      </a>
+
+      <!-- Titolo subito dopo il logo -->
+      <span id="mapTitle">MAPPA MENTALE</span>
+
+      <!-- Tutti gli altri tasti -->
+      <div class="rightButtons"><button class="btn" id="btnNew" >+ Nuovo pop</button>
       <button class="btn" id="btnMove">Sposta</button>
       <button class="btn" id="btnLink">Collega</button>
       <button class="btn danger" id="btnDelete">Elimina</button>
@@ -428,22 +474,17 @@
       </button>
       <button class="btn tiny" id="btnKeyboardHelp">Comandi da tastiera</button>
 
+      <!-- Seconda riga: suggerimenti + comandi testo a destra -->
+      </div>
+      <span class="status" id="status">Avvio...</span>
+
       <div class="textControls">
-        <span>Testo:</span>
+        <span>Formato:</span>
         <input type="color" id="txtColor" value="#000000" disabled>
-        <button class="btn tiny" id="btnSizeSmall" disabled>A-</button>
-        <button class="btn tiny" id="btnSizeLarge" disabled>A+</button>
+        <button class="btn tiny" id="btnSizeSmall" disabled>-</button>
+        <button class="btn tiny" id="btnSizeLarge" disabled>+</button>
         <button class="btn tiny" id="btnBold" disabled><b>B</b></button>
       </div>
-
-      <span class="status" id="status">Avvio...</span>
-      <span id="mapTitle">MAPPA MENTALE</span>
-
-      <a class="homeLogo"
-         href="https://sptzetaevi.github.io/antimappificio/"
-         title="Torna alla pagina principale ANTIMAPPIFICIO">
-        <span class="logoLetters">A&nbsp;M</span>
-      </a>
     </div>
 
     <div class="headerHandle" id="headerHandle" title="Mostra/nascondi strumenti"></div>
@@ -581,9 +622,10 @@
   function uid(){ return Math.random().toString(36).slice(2, 10); }
   function boardRect(){ return board.getBoundingClientRect(); }
 
-  var pops = [];   // {id,x,y,text,color,size,bold,height}
+  var pops = [];   // {id,x,y,text,color,size,borderColor,borderSize,bold,height}
   var links = [];  // {id,from,to,end,shape,curveDir}
   var selectedBoxId = null;
+  var selectedBoxPart = null; // "text" o "border"
   var selectedLinkId = null;
   var linkingFrom = null;
   var moveMode = false;
@@ -862,14 +904,14 @@
     btnBold.classList.remove("active");
   }
 
-  function enableTextControlsForPop(p) {
+  function enableTextControlsForText(p) {
     txtColor.disabled = false;
     btnSizeSmall.disabled = false;
     btnSizeLarge.disabled = false;
     btnBold.disabled = false;
 
     if (!p.color) p.color = "#000000";
-    if (!p.size) p.size = "small";
+    if (!p.size) p.size = "medium";
     if (typeof p.bold === "undefined") p.bold = false;
 
     txtColor.value = p.color;
@@ -879,21 +921,71 @@
     btnBold.classList.toggle("active", !!p.bold);
   }
 
+  function enableTextControlsForBorder(p) {
+    txtColor.disabled = false;
+    btnSizeSmall.disabled = false;
+    btnSizeLarge.disabled = false;
+    btnBold.disabled = true;
+
+    if (!p.borderColor) p.borderColor = p.color || "#000000";
+    if (!p.borderSize) p.borderSize = "thin";
+
+    txtColor.value = p.borderColor;
+
+    btnSizeSmall.classList.remove("active");
+    btnSizeLarge.classList.remove("active");
+    if (p.borderSize === "thin") {
+      btnSizeSmall.classList.add("active");
+    } else if (p.borderSize === "thick") {
+      btnSizeLarge.classList.add("active");
+    }
+  }
+
+  function enableTextControlsForLink(l) {
+    // Per i collegamenti abilitiamo solo il colore
+    txtColor.disabled = false;
+    btnSizeSmall.disabled = true;
+    btnSizeLarge.disabled = true;
+    btnBold.disabled = true;
+
+    btnSizeSmall.classList.remove("active");
+    btnSizeLarge.classList.remove("active");
+    btnBold.classList.remove("active");
+
+    txtColor.value = l.color || "#000000";
+  }
+
   function updateTextControls() {
-    if (!selectedBoxId) {
-      disableTextControls();
+    if (selectedBoxId) {
+      var p = pops.find(function(pp){ return pp.id === selectedBoxId; });
+      if (!p) {
+        disableTextControls();
+        return;
+      }
+      if (selectedBoxPart === "border") {
+        enableTextControlsForBorder(p);
+      } else {
+        enableTextControlsForText(p);
+      }
       return;
     }
-    var p = pops.find(function(pp){ return pp.id === selectedBoxId; });
-    if (!p) {
-      disableTextControls();
+
+    if (selectedLinkId) {
+      var l = links.find(function(ll){ return ll.id === selectedLinkId; });
+      if (!l) {
+        disableTextControls();
+        return;
+      }
+      enableTextControlsForLink(l);
       return;
     }
-    enableTextControlsForPop(p);
+
+    disableTextControls();
   }
 
   function clearSelections() {
     selectedBoxId = null;
+    selectedBoxPart = null;
     selectedLinkId = null;
     var a = document.querySelectorAll(".pop");
     for (var i=0;i<a.length;i++) a[i].classList.remove("selected");
@@ -917,6 +1009,7 @@
   function selectLink(id) {
     selectedLinkId = id;
     selectedBoxId = null;
+    selectedBoxPart = null;
     var a = document.querySelectorAll(".linkLine");
     for (var i=0;i<a.length;i++) {
       a[i].classList.toggle("selected", a[i].dataset.linkid === id);
@@ -935,7 +1028,7 @@
     } else {
       btnPan.classList.remove("active");
       if (btnPan_f) btnPan_f.classList.remove("active");
-      setStatus("Pronto");
+      setStatus("Pensa ad un argomento e scrivigli intorno tutto quello che ti viene in mente");
     }
   }
 
@@ -965,7 +1058,7 @@
       btnLink.classList.remove("active");
       var b = document.querySelectorAll(".pop");
       for (var j=0;j<b.length;j++) b[j].classList.remove("linking");
-      setStatus("Pronto");
+      setStatus("Pensa ad un argomento e scrivigli intorno tutto quello che ti viene in mente");
     }
   }
       
@@ -981,7 +1074,7 @@
     } else {
       btnMove.classList.remove("active");
       if (btnMove_f) btnMove_f.classList.remove("active");
-      setStatus("Pronto");
+      setStatus("Pensa ad un argomento e scrivigli intorno tutto quello che ti viene in mente quando pensi ad un argomento.");
     }
 
     var tas = document.querySelectorAll(".pop .body");
@@ -1037,7 +1130,9 @@
       y: y,
       text: "",
       color: "#000000",
-      size: "small",
+      borderColor: "#000000",
+      size: "medium",
+      borderSize: "thin",
       bold: false,
       height: 0,
       bigIntro: isFirst
@@ -1049,7 +1144,7 @@
     selectBox(p.id);
 
     setStatus(
-      "Suggerimento: scrivi un concetto chiave senza articoli o aggettivi (es. SI: Napoleone — NO: il grande Napoleone)."
+      "Pensa ad un argomento e scrivigli intorno tutto quello che ti viene in mente quando pensi ad un argomento.."
     );
 
     var el = document.querySelector('.pop[data-id="' + p.id + '"] .body');
@@ -1146,9 +1241,11 @@
       var end = l.end || "arrow";
       var shape = l.shape || "straight";
 
-      var color = "#000000";
-      var toPop = pops.find(function(pp){ return pp.id === l.to; });
-      if (toPop && toPop.color) color = toPop.color;
+      var color = l.color || "#000000";
+      if (!l.color) {
+        var toPop = pops.find(function(pp){ return pp.id === l.to; });
+        if (toPop && toPop.color) color = toPop.color;
+      }
 
       var elWire;
 
@@ -1233,7 +1330,7 @@
 
     pops.forEach(function (p, idx) {
       if (!p.color) p.color = "#000000";
-      if (!p.size) p.size = "small";
+      if (!p.size) p.size = "medium";
       if (typeof p.bold === "undefined") p.bold = false;
 
       var el = document.createElement("div");
@@ -1246,19 +1343,43 @@
 
       var placeholderAttr = "";
       if (idx === 0) {
-        placeholderAttr = ' placeholder="Inserisci qui l&#39;argomento della mappa"';
+        placeholderAttr = ' placeholder="Scrivi qui l&#39;argomento a cui stai pensando e di cui vuoi fare una mappa."';
+      } else {
+        placeholderAttr = ' placeholder="qui quello che si collega"';
       }
 
       el.innerHTML =
         '<textarea class="body" spellcheck="false" rows="1" cols="6"' + placeholderAttr + '></textarea>';
 
       var ta = el.querySelector(".body");
+
       ta.value = p.text || "";
 
-      var fontSizePx = (p.size === "large") ? "20px" : "14px";
+      var textSizeKey = p.size || "medium";
+      var fontSizePx;
+      if (textSizeKey === "small") {
+        fontSizePx = "14px";
+      } else if (textSizeKey === "large") {
+        fontSizePx = "22px";
+      } else {
+        fontSizePx = "18px";   // medium
+      }
+
+      var borderSizeKey = p.borderSize || "thin";
+      var borderWidth;
+      if (borderSizeKey === "thin") {
+        borderWidth = 1;
+      } else if (borderSizeKey === "thick") {
+        borderWidth = 3;
+      } else {
+        borderWidth = 2;       // medium
+      }
+
       ta.style.fontSize = fontSizePx;
       ta.style.fontWeight = p.bold ? "700" : "400";
       ta.style.color = p.color || "#000000";
+      el.style.borderWidth = borderWidth + "px";
+      el.style.borderColor = p.borderColor || "#000000";
 
       if (typeof p.height === "number" && p.height > 0) {
         ta.style.height = p.height + "px";
@@ -1270,6 +1391,7 @@
       if (p.id === linkingFrom) el.classList.add("linking");
 
       ta.addEventListener("focus", function () {
+        selectedBoxPart = "text";
         selectBox(p.id);
 
         /* SU SMARTPHONE: chiudo l'header per liberare spazio
@@ -1286,6 +1408,7 @@
       });
 
       ta.addEventListener("mousedown", function (e) {
+        selectedBoxPart = "text";
         selectBox(p.id);
         if (linkingFrom && linkingFrom !== p.id) e.preventDefault();
       });
@@ -1313,6 +1436,7 @@
       var dragging = false, sx=0, sy=0, ox=0, oy=0;
 
       el.addEventListener("pointerdown", function (e) {
+        if (e.target && e.target.classList && e.target.classList.contains("body")) selectedBoxPart = "text"; else selectedBoxPart = "border";
         if (e.pointerType === "mouse" && e.button !== 0) return;
         if (!moveMode && e.target && e.target.tagName && e.target.tagName.toLowerCase() === "textarea") return;
 
@@ -1458,7 +1582,7 @@
     if (e.target === board) {
       clearSelections();
       setLinkMode(false);
-      setStatus("Pronto");
+      setStatus("Pensa ad un argomento e scrivigli intorno tutto quello che ti viene in mente quando pensi ad un argomento.");
     }
   });
 
@@ -1619,16 +1743,33 @@
   }
 
   txtColor.addEventListener("input", function(){
+    var newColor = txtColor.value || "#000000";
+
+    // Se è selezionato un collegamento, cambia colore alla freccia
+    if (selectedLinkId && !selectedBoxId) {
+      var l = links.find(function(ll){ return ll.id === selectedLinkId; });
+      if (l) {
+        l.color = newColor;
+        renderLinks();
+      }
+      return;
+    }
+
+    // Se è selezionato un box, controlla se stai lavorando su testo o bordo
     if (!selectedBoxId) return;
     var p = pops.find(function(pp){ return pp.id === selectedBoxId; });
     if (!p) return;
-    p.color = txtColor.value || "#000000";
 
-    var ta = document.querySelector('.pop[data-id="'+p.id+'"] .body');
-    if (ta) ta.style.color = p.color;
-
-    var boxEl = document.querySelector('.pop[data-id="'+p.id+'"]');
-    if (boxEl) boxEl.style.borderColor = p.color;
+    if (selectedBoxPart === "text") {
+      p.color = newColor;
+      var ta = document.querySelector('.pop[data-id="'+p.id+'"] .body');
+      if (ta) ta.style.color = p.color;
+    } else {
+      p.borderColor = newColor;
+      var boxEl = document.querySelector('.pop[data-id="'+p.id+'"]');
+      if (boxEl) boxEl.style.borderColor = p.borderColor;
+      // aggiorna frecce in modo coerente con il bordo solo se non hanno un colore proprio
+    }
 
     renderLinks();
   });
@@ -1637,12 +1778,26 @@
     if (!selectedBoxId) return;
     var p = pops.find(function(pp){ return pp.id === selectedBoxId; });
     if (!p) return;
-    p.size = "small";
+
+    if (selectedBoxPart === "border") {
+      // scala bordo verso il più sottile: thick -> medium -> thin
+      var current = p.borderSize || "thin";
+      if (current === "thick") current = "medium";
+      else current = "thin";
+      p.borderSize = current;
+    } else {
+      // scala testo verso il più piccolo: large -> medium -> small
+      var current = p.size || "medium";
+      if (current === "large") current = "medium";
+      else current = "small";
+      p.size = current;
+    }
+
     var ta = document.querySelector('.pop[data-id="'+p.id+'"] .body');
     if (ta) {
-      ta.style.fontSize = "14px";
       autoGrow(ta, p);
     }
+    render();
     updateTextControls();
   });
 
@@ -1650,12 +1805,26 @@
     if (!selectedBoxId) return;
     var p = pops.find(function(pp){ return pp.id === selectedBoxId; });
     if (!p) return;
-    p.size = "large";
+
+    if (selectedBoxPart === "border") {
+      // scala bordo verso il più spesso: thin -> medium -> thick
+      var current = p.borderSize || "thin";
+      if (current === "thin") current = "medium";
+      else current = "thick";
+      p.borderSize = current;
+    } else {
+      // scala testo verso il più grande: small -> medium -> large
+      var current = p.size || "medium";
+      if (current === "small") current = "medium";
+      else current = "large";
+      p.size = current;
+    }
+
     var ta = document.querySelector('.pop[data-id="'+p.id+'"] .body');
     if (ta) {
-      ta.style.fontSize = "20px";
       autoGrow(ta, p);
     }
+    render();
     updateTextControls();
   });
 
@@ -1703,7 +1872,7 @@
   });
 
   render();
-  setStatus("Pronto");
+  setStatus("Pensa ad un argomento e scrivigli intorno tutto quello che ti viene in mente quando pensi ad un argomento.");
 
   /* --- ADATTAMENTO CONTROLLI FLOTTANTI CON TASTIERA MOBILE --- */
   if (window.visualViewport) {
